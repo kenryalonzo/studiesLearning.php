@@ -159,10 +159,17 @@ function studies_learning_scripts() {
 	wp_enqueue_script( 'studies-learning-courses-js', get_template_directory_uri() . '/js/courses-slider.js', array('swiper-script'), _S_VERSION, true );
 	wp_enqueue_script( 'studies-learning-courses-filter', get_template_directory_uri() . '/js/courses-filter.js', array('jquery', 'studies-learning-courses-js'), _S_VERSION, true );
 
-    wp_localize_script( 'studies-learning-courses-filter', 'studiesAjax', array(
+    // Search Banner Assets
+    wp_enqueue_style( 'studies-learning-search-banner', get_template_directory_uri() . '/css/search-banner.css', array(), _S_VERSION );
+    wp_enqueue_script( 'studies-learning-search-autocomplete', get_template_directory_uri() . '/js/search-autocomplete.js', array('jquery'), _S_VERSION, true );
+
+    // Localize both scripts
+    $ajax_data = array(
         'ajax_url' => admin_url( 'admin-ajax.php' ),
-        'nonce'    => wp_create_nonce( 'studies_filter_nonce' )
-    ));
+        'nonce'    => wp_create_nonce( 'studies_ajax_nonce' )
+    );
+    wp_localize_script( 'studies-learning-courses-filter', 'studiesAjax', $ajax_data );
+    wp_localize_script( 'studies-learning-search-autocomplete', 'studiesSearchAjax', $ajax_data );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
@@ -307,3 +314,68 @@ function studies_filter_courses_handler() {
 }
 add_action('wp_ajax_filter_courses', 'studies_filter_courses_handler');
 add_action('wp_ajax_nopriv_filter_courses', 'studies_filter_courses_handler');
+
+/**
+ * AJAX Handler for Real-Time Course Search
+ */
+function studies_search_formations_handler() {
+    check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
+
+    global $wpdb;
+    $s = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
+
+    if (strlen($s) < 2) {
+        wp_die();
+    }
+
+    $like_s = '%' . $wpdb->esc_like($s) . '%';
+    
+    $results = $wpdb->get_results($wpdb->prepare("
+        SELECT 
+            f.id_formation, f.titre, f.prix, f.niveau_formation AS niveau,
+            t.nom_thematique AS categorie
+        FROM sl_formation f
+        LEFT JOIN sl_thematique t ON f.id_thematique = t.id_thematique
+        WHERE f.statut = 'publiée' 
+        AND (f.titre LIKE %s OR t.nom_thematique LIKE %s)
+        ORDER BY 
+            CASE 
+                WHEN f.titre LIKE %s THEN 1
+                WHEN f.titre LIKE %s THEN 2
+                ELSE 3
+            END,
+            f.date_creation DESC
+        LIMIT 6
+    ", $like_s, $like_s, $s, $like_s));
+
+    if (empty($results)) {
+        echo '<div class="search-no-results">Aucune formation trouvée.</div>';
+        wp_die();
+    }
+
+    foreach ($results as $item) :
+        $is_free = (empty($item->prix) || $item->prix == 0);
+        $price_label = $is_free ? 'Gratuit' : number_format($item->prix, 0, '.', ' ') . '€';
+        ?>
+        <a href="<?php echo esc_url(home_url('/formation/' . $item->id_formation)); ?>" class="search-suggestion-item">
+            <div class="suggestion-icon">
+                <i class="ph ph-book-open"></i>
+            </div>
+            <div class="suggestion-info">
+                <h4 class="suggestion-title"><?php echo esc_html($item->titre); ?></h4>
+                <div class="suggestion-meta">
+                    <span class="s-cat"><?php echo esc_html($item->categorie); ?></span>
+                    <span class="s-sep">•</span>
+                    <span class="s-level"><?php echo esc_html($item->niveau); ?></span>
+                    <span class="s-sep">•</span>
+                    <span class="s-price <?php echo $is_free ? 'is-free' : ''; ?>"><?php echo esc_html($price_label); ?></span>
+                </div>
+            </div>
+        </a>
+        <?php
+    endforeach;
+
+    wp_die();
+}
+add_action('wp_ajax_search_formations', 'studies_search_formations_handler');
+add_action('wp_ajax_nopriv_search_formations', 'studies_search_formations_handler');

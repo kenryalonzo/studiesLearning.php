@@ -1,0 +1,210 @@
+/* Search Banner Section - Glassmorphism Style */
+.search-banner-premium {
+  position: relative;
+  padding: 120px 0;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
+  overflow: hidden;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 400px;
+}
+
+/* Background Decorative Blobs */
+.search-banner-premium::before {
+  content: "";
+  position: absolute;
+  top: -150px;
+  left: -100px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 71, 255, 0.1) 0%,
+    transparent 70%
+  );
+  filter: blur(100px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.search-banner-container {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px;
+  text-align: center;
+}
+
+.search-banner-content h2 {
+  font-family: "Outfit", sans-serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #121826;
+  margin-bottom: 40px;
+  letter-spacing: -0.02em;
+}
+
+/* Search Wrapper */
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-input-premium {
+  width: 100%;
+  height: 65px;
+  padding: 0 30px 0 65px;
+  font-size: 1.1rem;
+  font-family: "Outfit", sans-serif;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 40px;
+  box-shadow: 0 10px 30px rgba(0, 71, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  color: #121826;
+  outline: none;
+}
+
+.search-input-premium:focus {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #0047ff;
+  box-shadow: 0 15px 40px rgba(0, 71, 255, 0.12);
+}
+
+.search-icon-fixed {
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: #0047ff;
+  pointer-events: none;
+}
+
+/* Suggestions Dropdown */
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  display: none; /* Initially hidden */
+  text-align: left;
+}
+
+.search-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 25px;
+  text-decoration: none;
+  color: #121826;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+}
+
+.search-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.search-suggestion-item:hover,
+.search-suggestion-item.is-focused {
+  background: rgba(0, 71, 255, 0.05);
+}
+
+.suggestion-icon {
+  width: 45px;
+  height: 45px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #0047ff;
+  box-shadow: 0 5px 15px rgba(0, 71, 255, 0.05);
+}
+
+.suggestion-info {
+  flex-grow: 1;
+}
+
+.suggestion-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #121826;
+}
+
+.suggestion-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.s-sep {
+  opacity: 0.3;
+}
+
+.s-price {
+  font-weight: 700;
+  color: #0047ff;
+}
+
+.s-price.is-free {
+  color: #10b981;
+}
+
+.search-no-results {
+  padding: 30px;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Loader inside input */
+.search-loader {
+  position: absolute;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 71, 255, 0.1);
+  border-top: 2px solid #0047ff;
+  border-radius: 50%;
+  animation: search-spin 0.8s linear infinite;
+  display: none;
+}
+
+@keyframes search-spin {
+  0% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .search-banner-content h2 {
+    font-size: 2rem;
+  }
+  .search-suggestion-item {
+    padding: 12px 20px;
+  }
+}
