@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize Swiper.js for courses
-  const coursesSwiper = new Swiper(".courses-swiper", {
+  // Initialize Swiper.js for Eduma-style courses
+  const edumaCoursesSwiper = new Swiper(".eduma-courses-swiper", {
     slidesPerView: 1,
     spaceBetween: 30,
     loop: true,
@@ -8,13 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
       delay: 5000,
       disableOnInteraction: false,
     },
-    pagination: {
-      el: ".swiper-pagination",
-      clickable: true,
-    },
     navigation: {
-      nextEl: ".swiper-button-next",
-      prevEl: ".swiper-button-prev",
+      nextEl: ".swiper-button-next-custom",
+      prevEl: ".swiper-button-prev-custom",
     },
     breakpoints: {
       640: {
@@ -25,18 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
         slidesPerView: 3,
         spaceBetween: 30,
       },
+      1280: {
+        slidesPerView: 4,
+        spaceBetween: 30,
+      },
     },
-  });
-
-  // Handle flip effect on click
-  const courseCards = document.querySelectorAll(".course-card-inner");
-  courseCards.forEach((card) => {
-    card.addEventListener("click", function (e) {
-      // Prevent flip if clicking the "Voir le cours" button on the back
-      if (e.target.classList.contains("btn-primary-soft")) {
-        return;
-      }
-      this.classList.toggle("is-flipped");
-    });
   });
 });

@@ -1,348 +1,244 @@
-/* Courses Section Premium Styles */
-.courses-section-premium {
-  padding: 100px 0;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
-  overflow: hidden;
-  position: relative;
-  scroll-snap-align: start; /* Fix for the scroll issue */
+/* Eduma-Style Courses Section */
+.eduma-courses-section {
+  padding: 80px 0;
+  background: #f8fbff; /* Very light blue background */
+  scroll-snap-align: start;
 }
 
-/* Background Decorative Elements (Extraordinary depth) */
-.courses-section-premium::before,
-.courses-section-premium::after {
-  content: "";
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: 0;
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.courses-section-premium::before {
-  top: -200px;
-  right: -100px;
-  background: radial-gradient(
-    circle,
-    rgba(0, 71, 255, 0.2) 0%,
-    transparent 70%
-  );
-}
-
-.courses-section-premium::after {
-  bottom: -200px;
-  left: -100px;
-  background: radial-gradient(
-    circle,
-    rgba(255, 34, 45, 0.15) 0%,
-    transparent 70%
-  );
-}
-
-.container {
-  position: relative;
-  z-index: 10;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-.section-header-v2 {
-  text-align: center;
-  margin-bottom: 70px;
-}
-
-.section-title-premium {
-  font-family: "Outfit", sans-serif;
-  font-size: 3.5rem; /* Bigger for extraordinary feel */
-  font-weight: 900;
-  color: #1a1a1a;
-  margin-bottom: 20px;
-  letter-spacing: -0.03em;
-}
-
-.section-title-premium span {
-  color: var(--primary-blue, #0047ff);
-  position: relative;
-}
-
-.section-subtitle {
-  font-size: 1.25rem;
-  color: #57606f;
-  max-width: 700px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-/* Slider Wrapper */
-.courses-slider-wrapper {
-  position: relative;
-  padding: 20px 0 80px;
-}
-
-/* Swiper Container */
-.courses-swiper {
-  padding: 40px 20px !important;
-  overflow: visible !important; /* Allow cards to peek out */
-}
-
-/* Course Card Inner (for Flip Effect) */
-.course-card-inner {
-  position: relative;
-  width: 100%;
-  height: 480px; /* Increased height */
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-  cursor: pointer;
-}
-
-.course-card-inner:hover {
-  transform: translateY(-15px) rotateX(2deg) rotateY(2deg);
-}
-
-.course-card-inner.is-flipped {
-  transform: rotateY(180deg);
-}
-
-/* Front & Back Sides */
-.course-card-front,
-.course-card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  border-radius: 32px; /* Smoother corners */
-  padding: 40px;
+.eduma-section-header {
   display: flex;
-  flex-direction: column;
-  box-shadow:
-    0 20px 40px rgba(0, 71, 255, 0.05),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 20px;
 }
 
-/* Front Side: Light Blue Glassmorphism */
-.course-card-front {
-  background: rgba(240, 248, 255, 0.85); /* AliceBlue variation */
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-}
-
-/* Category Badge */
-.course-category-badge {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.cat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  object-fit: cover;
-  background: #fff;
-  padding: 8px;
-  box-shadow: 0 8px 20px rgba(0, 71, 255, 0.1);
-}
-
-.course-category-badge span {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #0047ff;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-/* Title */
-.course-title {
-  font-family: "Outfit", sans-serif;
-  font-size: 1.7rem;
-  font-weight: 800;
-  color: #121826;
-  margin-bottom: 30px;
-  line-height: 1.2;
+.header-left {
   flex-grow: 1;
 }
 
-/* Metas */
-.course-metas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 35px;
+.eduma-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #2d3436;
+  margin: 0 0 10px 0;
 }
 
-.meta-item {
+.title-separator {
+  width: 40px;
+  height: 2px;
+  background: #0047ff; /* Theme Blue */
+  margin-bottom: 10px;
+}
+
+.eduma-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.header-right {
   display: flex;
   align-items: center;
+}
+
+.swiper-navigation-custom {
+  display: flex;
   gap: 10px;
-  color: #475569;
-  font-size: 1rem;
-  font-weight: 500;
-  background: rgba(0, 71, 255, 0.04);
-  padding: 6px 14px;
-  border-radius: 12px;
 }
 
-.meta-item i {
-  font-size: 1.3rem;
-  color: #0047ff;
-}
-
-/* Footer */
-.course-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 25px;
-  border-top: 1px solid rgba(0, 71, 255, 0.08);
-}
-
-.course-price {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #121826;
-}
-
-.price-free {
-  color: #059669;
-  background: rgba(5, 150, 105, 0.1);
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 1rem;
-}
-
-.course-btn {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #0047ff, #2c3fb9);
-  color: #fff;
-  border-radius: 18px;
+.swiper-button-next-custom,
+.swiper-button-prev-custom {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 10px 20px rgba(0, 71, 255, 0.2);
+  cursor: pointer;
+  border-radius: 4px;
+  color: #2d3436;
+  transition: all 0.3s;
 }
 
-.course-btn i {
-  font-size: 1.4rem;
+.swiper-button-next-custom:hover,
+.swiper-button-prev-custom:hover {
+  background: #0047ff;
+  color: #fff;
+  border-color: #0047ff;
 }
 
-.course-btn:hover {
-  transform: rotate(45deg);
+/* Slider */
+.eduma-courses-swiper {
+  padding: 10px 0 40px 0;
+  overflow: hidden;
+}
+
+/* Card Style */
+.eduma-course-card {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.eduma-course-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 71, 255, 0.08);
+  transform: translateY(-5px);
+}
+
+.course-thumb {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.course-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.eduma-course-card:hover .course-thumb img {
+  transform: scale(1.1);
+}
+
+.course-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 71, 255, 0.7); /* Theme Blue overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.eduma-course-card:hover .course-overlay {
+  opacity: 1;
+}
+
+.read-more-btn {
+  background: #0047ff;
+  color: #fff;
+  padding: 10px 25px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.eduma-course-card:hover .read-more-btn {
+  transform: translateY(0);
+}
+
+/* Content */
+.course-content {
+  padding: 25px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-author {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.course-title-link {
+  margin: 0 0 20px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.4;
+  height: 3.2em; /* Limit to 2 lines */
+  overflow: hidden;
+}
+
+.course-title-link a {
+  text-decoration: none;
+  color: #2d3436;
+  transition: color 0.3s;
+}
+
+.course-title-link a:hover {
+  color: #0047ff;
+}
+
+/* Footer Info */
+.course-info-footer {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-left {
+  display: flex;
+  gap: 15px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.info-left span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.price-tag {
+  font-weight: 700;
+  color: #0047ff;
+  font-size: 1rem;
+}
+
+.price-tag.is-free {
+  color: #22c55e;
+}
+
+/* Footer Actions */
+.eduma-footer-actions {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.view-more-global {
+  display: inline-block;
+  background: #0047ff;
+  color: #fff;
+  padding: 14px 40px;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 4px;
+  transition: all 0.3s;
+  box-shadow: 0 8px 20px rgba(0, 71, 255, 0.2);
+}
+
+.view-more-global:hover {
+  background: #2c3fb9;
+  transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(0, 71, 255, 0.3);
 }
 
-/* Back Side */
-.course-card-back {
-  background: linear-gradient(135deg, #121826, #1e293b);
-  color: #fff;
-  transform: rotateY(180deg);
-}
-
-.course-card-back h4 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #60a5fa;
-}
-
-.course-card-back p {
-  font-size: 1rem;
-  opacity: 0.9;
-  line-height: 1.6;
-  margin-bottom: 30px;
-}
-
-.course-highlights {
-  list-style: none;
-  padding: 0;
-  margin-bottom: 40px;
-}
-
-.course-highlights li {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  font-size: 1rem;
-  margin-bottom: 15px;
-}
-
-.course-highlights li i {
-  color: #34d399;
-}
-
-.btn-primary-soft {
-  display: block;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  text-decoration: none;
-  border-radius: 18px;
-  font-weight: 700;
-  text-align: center;
-  transition: all 0.3s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn-primary-soft:hover {
-  background: #fff;
-  color: #121826;
-}
-
-/* Swiper Customization */
-.custom-nav {
-  color: #0047ff !important;
-  background: rgba(255, 255, 255, 0.9);
-  width: 65px !important;
-  height: 65px !important;
-  border-radius: 22px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-}
-
-.custom-nav:after {
-  font-size: 1.5rem !important;
-}
-
-.swiper-pagination {
-  bottom: 0 !important;
-}
-
-.swiper-pagination-bullet {
-  width: 12px;
-  height: 12px;
-  background: #cbd5e1;
-  opacity: 1;
-  transition: all 0.3s;
-}
-
-.swiper-pagination-bullet-active {
-  background: #0047ff !important;
-  width: 30px;
-  border-radius: 6px;
-}
-
 /* Responsive */
-@media (max-width: 1024px) {
-  .section-title-premium {
-    font-size: 2.8rem;
-  }
-}
-
 @media (max-width: 768px) {
-  .container {
-    padding: 0 20px;
+  .eduma-section-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .section-title-premium {
-    font-size: 2.2rem;
-  }
-  .course-card-inner {
-    height: 520px;
+  .header-right {
+    margin-top: 20px;
   }
 }
