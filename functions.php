@@ -183,3 +183,17 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 	require get_template_directory() . '/inc/jetpack.php';
 }
 
+/**
+ * Menu fallback for studies-learning
+ */
+function studies_learning_menu_fallback() {
+	echo '<ul class="nav-links">';
+	echo '<li><a href="' . esc_url( home_url( '/' ) ) . '" class="active">Accueil</a></li>';
+	echo '<li><a href="' . esc_url( home_url( '/formations' ) ) . '">Formations</a></li>';
+	echo '<li><a href="' . esc_url( home_url( '/devenir-formateur' ) ) . '">Devenir formateur</a></li>';
+	echo '<li><a href="' . esc_url( home_url( '/sl-university' ) ) . '">SL university</a></li>';
+	echo '<li><a href="' . esc_url( home_url( '/sl-business' ) ) . '">SL business</a></li>';
+	echo '<li><a href="' . esc_url( home_url( '/blog' ) ) . '">Blog</a></li>';
+	echo '</ul>';
+}
+

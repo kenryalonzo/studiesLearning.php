@@ -37,6 +37,11 @@ Nicolas Gallagher and Jonathan Neal https://necolas.github.io/normalize.css/
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
 body {
   font-family: "Outfit", sans-serif;
   color: var(--text-dark);
@@ -45,6 +50,7 @@ body {
   background-size: 100% auto;
   line-height: 1.6;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
 /* Navbar Premium */
@@ -62,25 +68,24 @@ header {
   position: fixed;
   top: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(-20px);
+  transform: translateX(-50%) translateY(0);
   z-index: 1000;
-  width: 100%;
+  width: 95%;
   max-width: 1300px;
-  background: rgba(255, 255, 255, 0.616);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
-  padding: 1.2rem 4rem;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  padding: 1rem 3.5rem;
   display: flex;
-  margin: 10px;
+  margin: 15px auto;
   justify-content: space-between;
   align-items: center;
-  border-radius: 45px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-top: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.03);
   opacity: 0;
-  animation: revealNavMisty 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-  animation-delay: 0.1s;
+  animation: revealNavMisty 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 @keyframes revealNavMisty {
@@ -116,14 +121,17 @@ header {
 .nav-links a {
   text-decoration: none;
   color: var(--text-dark);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
   transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
   color: var(--primary-blue);
+  opacity: 1;
 }
 
 .nav-links a.active {
@@ -150,12 +158,13 @@ header {
 }
 
 .hero-premium {
-  padding-top: 5.5rem;
-  padding-bottom: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  min-height: auto;
+  scroll-snap-align: start;
+  padding-top: 2rem;
 }
 
 .hero-content {
@@ -900,6 +909,8 @@ header {
 
 /* Scroll reveal helper */
 .courses-section {
+  scroll-snap-align: start;
+  padding: 8rem 0;
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s ease-out;

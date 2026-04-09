@@ -47,12 +47,13 @@
 					'menu_id'        => 'primary-menu',
 					'container'      => false,
 					'menu_class'     => 'nav-links',
+					'fallback_cb'    => 'studies_learning_menu_fallback',
 				)
 			);
 			?>
 
 			<div class="nav-actions">
-				<a href="#" class="btn-campus">Campus</a>
+				<a href="/campus" class="btn-campus">Campus</a>
 			</div>
 		</nav>
 	</header><!-- #masthead -->
