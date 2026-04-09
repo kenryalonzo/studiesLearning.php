@@ -249,13 +249,7 @@ get_header();
             </div>
         </div>
     </section>
-    <section class="courses-section reveal">
-        <div class="courses-container">
-            <div class="section-header-v2">
-                <h2 class="section-title-premium">Explorez les meilleurs cours</h2>
-            </div>
-        </div>
-    </section>
+    <?php get_template_part( 'template-parts/section', 'courses' ); ?>
 </main>
 
 <?php

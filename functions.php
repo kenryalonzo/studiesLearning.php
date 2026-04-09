@@ -147,8 +147,16 @@ function studies_learning_scripts() {
 	// Phosphor Icons
 	wp_enqueue_script( 'phosphor-icons', 'https://unpkg.com/@phosphor-icons/web', array(), null, false );
 
+	// Swiper.js
+	wp_enqueue_style( 'swiper-style', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css', array(), '11.0.0' );
+	wp_enqueue_script( 'swiper-script', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true );
+
 	wp_enqueue_script( 'studies-learning-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );
 	wp_enqueue_script( 'studies-learning-main', get_template_directory_uri() . '/js/main.js', array(), _S_VERSION, true );
+	
+	// Custom Courses Section Assets
+	wp_enqueue_style( 'studies-learning-courses', get_template_directory_uri() . '/css/courses-section.css', array(), _S_VERSION );
+	wp_enqueue_script( 'studies-learning-courses-js', get_template_directory_uri() . '/js/courses-slider.js', array('swiper-script'), _S_VERSION, true );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
