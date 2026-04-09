@@ -157,6 +157,12 @@ function studies_learning_scripts() {
 	// Custom Courses Section Assets
 	wp_enqueue_style( 'studies-learning-courses', get_template_directory_uri() . '/css/courses-section.css', array(), _S_VERSION );
 	wp_enqueue_script( 'studies-learning-courses-js', get_template_directory_uri() . '/js/courses-slider.js', array('swiper-script'), _S_VERSION, true );
+	wp_enqueue_script( 'studies-learning-courses-filter', get_template_directory_uri() . '/js/courses-filter.js', array('jquery', 'studies-learning-courses-js'), _S_VERSION, true );
+
+    wp_localize_script( 'studies-learning-courses-filter', 'studiesAjax', array(
+        'ajax_url' => admin_url( 'admin-ajax.php' ),
+        'nonce'    => wp_create_nonce( 'studies_filter_nonce' )
+    ));
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
@@ -205,3 +211,99 @@ function studies_learning_menu_fallback() {
 	echo '</ul>';
 }
 
+
+/**
+ * AJAX Handler for filtering courses
+ */
+function studies_filter_courses_handler() {
+    check_ajax_referer( 'studies_filter_nonce', 'nonce' );
+
+    global $wpdb;
+
+    $category = isset($_POST['category']) ? intval($_POST['category']) : 0;
+    $level = isset($_POST['level']) ? sanitize_text_field($_POST['level']) : '';
+    $price_type = isset($_POST['price']) ? sanitize_text_field($_POST['price']) : '';
+
+    $where = ["f.statut = 'publiée'"];
+    $params = [];
+
+    if ($category > 0) {
+        $where[] = "f.id_thematique = %d";
+        $params[] = $category;
+    }
+
+    if (!empty($level)) {
+        $where[] = "f.niveau_formation = %s";
+        $params[] = $level;
+    }
+
+    if ($price_type === 'gratuit') {
+        $where[] = "(f.prix = 0 OR f.prix IS NULL)";
+    } elseif ($price_type === 'payant') {
+        $where[] = "f.prix > 0";
+    }
+
+    $where_sql = implode(' AND ', $where);
+    
+    $query = "
+        SELECT 
+            f.id_formation, f.titre, f.prix, f.niveau_formation AS niveau, f.nb_lessons AS nb_lecons,
+            t.nom_thematique AS categorie,
+            (SELECT COUNT(*) FROM sl_formation_students s WHERE s.id_formation = f.id_formation) AS nb_inscrits
+        FROM sl_formation f
+        LEFT JOIN sl_thematique t ON f.id_thematique = t.id_thematique
+        WHERE $where_sql
+        ORDER BY f.date_creation DESC
+        LIMIT 10
+    ";
+
+    if (!empty($params)) {
+        $courses = $wpdb->get_results($wpdb->prepare($query, ...$params));
+    } else {
+        $courses = $wpdb->get_results($query);
+    }
+
+    if (empty($courses)) {
+        echo '<div class="no-courses-found">Aucune formation ne correspond à vos critères.</div>';
+        wp_die();
+    }
+
+    foreach ($courses as $course) : 
+        $is_free = (empty($course->prix) || $course->prix == 0);
+        $price_display = $is_free ? 'Gratuit' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
+        $image_placeholder = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png'; 
+        ?>
+        <div class="swiper-slide">
+            <div class="eduma-course-card">
+                <div class="course-thumb">
+                    <img src="<?php echo $image_placeholder; ?>" alt="<?php echo esc_attr($course->titre); ?>">
+                    <div class="course-overlay">
+                        <a href="#" class="read-more-btn">VOIR PLUS</a>
+                    </div>
+                </div>
+                <div class="course-content">
+                    <div class="course-author"><?php echo esc_html($course->categorie); ?></div>
+                    <h3 class="course-title-link">
+                        <a href="#"><?php echo esc_html($course->titre); ?></a>
+                    </h3>
+                    <div class="course-info-footer">
+                        <div class="info-left">
+                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($course->nb_lecons); ?></span>
+                            <span><i class="ph ph-users"></i> <?php echo esc_html($course->nb_inscrits); ?></span>
+                        </div>
+                        <div class="info-right">
+                            <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">
+                                <?php echo esc_html($price_display); ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    endforeach;
+
+    wp_die();
+}
+add_action('wp_ajax_filter_courses', 'studies_filter_courses_handler');
+add_action('wp_ajax_nopriv_filter_courses', 'studies_filter_courses_handler');

@@ -67,6 +67,9 @@ if (empty($courses)) {
         )
     );
 }
+
+// Récupération des catégories pour le filtre
+$categories = $wpdb->get_results("SELECT id_thematique, nom_thematique FROM sl_thematique ORDER BY nom_thematique ASC");
 ?>
 
 <section class="eduma-courses-section">
@@ -78,6 +81,40 @@ if (empty($courses)) {
                 <div class="title-separator"></div>
                 <p class="eduma-subtitle">Apprentissage illimité, plus de possibilités</p>
             </div>
+            
+            <!-- Filter Bar -->
+            <div class="courses-filters-bar">
+                <button class="filter-btn active" data-filter="all">Tous</button>
+                
+                <div class="filter-group">
+                    <select id="filter-category" class="filter-select">
+                        <option value="">Toutes les catégories</option>
+                        <?php foreach ($categories as $cat) : ?>
+                            <option value="<?php echo esc_attr($cat->id_thematique); ?>"><?php echo esc_html($cat->nom_thematique); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="filter-level" class="filter-select">
+                        <option value="">Tous les niveaux</option>
+                        <option value="Débutant">Débutant</option>
+                        <option value="Intermédiaire">Intermédiaire</option>
+                        <option value="Avancé">Avancé</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="filter-price" class="filter-select">
+                        <option value="">Tous les types</option>
+                        <option value="gratuit">Gratuit</option>
+                        <option value="payant">Payant</option>
+                    </select>
+                </div>
+                
+                <button id="reset-filters" class="reset-btn" style="display: none;"><i class="ph ph-x"></i></button>
+            </div>
+
             <div class="header-right">
                 <div class="swiper-navigation-custom">
                     <div class="swiper-button-prev-custom"><i class="ph ph-caret-left"></i></div>
@@ -88,8 +125,13 @@ if (empty($courses)) {
 
         <!-- Carousel -->
         <div class="eduma-slider-wrapper">
+            <!-- Loading Overlay -->
+            <div class="courses-loader" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+            
             <div class="swiper eduma-courses-swiper">
-                <div class="swiper-wrapper">
+                <div class="swiper-wrapper" id="courses-ajax-container">
                     <?php foreach ($courses as $course) : 
                         $is_free = (empty($course->prix) || $course->prix == 0);
                         $price_display = $is_free ? 'Gratuit' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
