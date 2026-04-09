@@ -425,7 +425,104 @@ class FormationModel extends BaseModel
         }
     }
 
-    
+    /**
+     * Récupère les formations les plus récentes
+     * @param int $limit
+     * @param array $filters (category_id, level, price_type)
+     * @return array
+    */
+    public function getLatestFormations(int $limit = 5, array $filters = []): array
+    {
+        $where = ["p.post_type = 'lp_course'", "p.post_status = 'publish'"];
+        $join = "";
+        $params = [];
+
+        // Filtre catégorie
+        if (!empty($filters['category_id'])) {
+            $join .= " INNER JOIN {$this->tablePrefix}term_relationships tr ON p.ID = tr.object_id";
+            $join .= " INNER JOIN {$this->tablePrefix}term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id";
+            $where[] = "tt.term_id = :cat_id AND tt.taxonomy = 'course_category'";
+            $params[':cat_id'] = (int)$filters['category_id'];
+        }
+
+        // Filtre niveau (meta_key = 'niveau_public_formation' ou '_lp_level')
+        if (!empty($filters['level'])) {
+            $join .= " LEFT JOIN {$this->tablePrefix}postmeta pm_level ON p.ID = pm_level.post_id AND pm_level.meta_key = 'niveau_public_formation'";
+            $where[] = "pm_level.meta_value = :level";
+            $params[':level'] = $filters['level'];
+        }
+
+        // Filtre prix (gratuit/payant)
+        if (isset($filters['price_type'])) {
+            $join .= " LEFT JOIN {$this->tablePrefix}postmeta pm_price ON p.ID = pm_price.post_id AND pm_price.meta_key = '_lp_price'";
+            if ($filters['price_type'] === 'free') {
+                $where[] = "(pm_price.meta_value = '0' OR pm_price.meta_value IS NULL)";
+            } else {
+                $where[] = "pm_price.meta_value > 0";
+            }
+        }
+
+        $sql = "SELECT p.ID, p.post_title, p.post_date
+                FROM {$this->tablePrefix}posts p
+                $join
+                WHERE " . implode(' AND ', $where) . "
+                ORDER BY p.post_date DESC
+                LIMIT :limit";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+        $postIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        // Récupérer les données complètes de chaque formation
+        $formations = [];
+        foreach ($postIds as $postId) {
+            $formation = $this->getPostWithMeta($postId);
+            if ($formation) {
+                // Ajouter les infos de catégorie et image
+                $formation['category'] = $this->getFormationCategoryById($formation['categories'][0] ?? null);
+                $formations[] = $formation;
+            }
+        }
+        return $formations;
+    }
+
+    /**
+     * Recherche des formations par mot-clé
+    */
+    public function searchFormations(string $keyword, int $limit = 8): array
+    {
+        $sql = "SELECT p.ID, p.post_title, p.post_content
+                FROM {$this->tablePrefix}posts p
+                WHERE p.post_type = 'lp_course' 
+                AND p.post_status = 'publish'
+                AND (p.post_title LIKE :keyword OR p.post_content LIKE :keyword)
+                ORDER BY 
+                    CASE WHEN p.post_title LIKE :keyword_exact THEN 1 ELSE 2 END,
+                    p.post_date DESC
+                LIMIT :limit";
+
+        $stmt = $this->pdo->prepare($sql);
+        $keywordParam = '%' . $keyword . '%';
+        $stmt->bindValue(':keyword', $keywordParam);
+        $stmt->bindValue(':keyword_exact', $keyword . '%');
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $formations = [];
+        foreach ($results as $row) {
+            $formation = $this->getPostWithMeta($row['ID']);
+            if ($formation) {
+                $formation['category'] = $this->getFormationCategoryById($formation['categories'][0] ?? null);
+                $formations[] = $formation;
+            }
+        }
+        return $formations;
+    }
 
     /**
      * Créer un post complet avec métadonnées
