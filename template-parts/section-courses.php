@@ -5,71 +5,15 @@
  * @package studies-learning
  */
 
-global $wpdb;
+// Inclusion du modèle de formation
+require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
+$formationModel = new \BackOfficeAdmin\FormationModel();
 
-// Requête SQL optimisée avec les colonnes réelles fournies par l'utilisateur
-$courses = $wpdb->get_results("
-    SELECT 
-        f.id_formation, 
-        f.titre, 
-        f.prix, 
-        f.date_creation,
-        f.niveau_formation AS niveau,
-        f.nb_lessons AS nb_lecons,
-        t.nom_thematique AS categorie,
-        t.image_url AS image_categorie,
-        (SELECT COUNT(*) FROM sl_formation_students s WHERE s.id_formation = f.id_formation) AS nb_inscrits
-    FROM sl_formation f
-    LEFT JOIN sl_thematique t ON f.id_thematique = t.id_thematique
-    WHERE f.statut = 'publiée'
-    ORDER BY f.date_creation DESC
-    LIMIT 10
-");
-
-// Mode Démo : Si aucune formation n'est trouvée, on affiche des données fictives pour visualiser le design
-if (empty($courses)) {
-    $courses = array(
-        (object) array(
-            'titre' => 'Introduction LearnPress – LMS plugin',
-            'prix' => 0,
-            'categorie' => 'Keny White',
-            'nb_lecons' => 15,
-            'nb_inscrits' => 311,
-            'niveau' => 'Débutant',
-            'image_categorie' => ''
-        ),
-        (object) array(
-            'titre' => 'Créez un site LMS avec LearnPress',
-            'prix' => 0,
-            'categorie' => 'Keny White',
-            'nb_lecons' => 14,
-            'nb_inscrits' => 94,
-            'niveau' => 'Intermédiaire',
-            'image_categorie' => ''
-        ),
-        (object) array(
-            'titre' => 'Vendre des cours en présentiel avec LearnPress',
-            'prix' => 100.00,
-            'categorie' => 'Keny White',
-            'nb_lecons' => 20,
-            'nb_inscrits' => 0,
-            'niveau' => 'Tous niveaux',
-            'image_categorie' => ''
-        ),
-        (object) array(
-            'titre' => 'Comment enseigner un cours en ligne',
-            'prix' => 55.00,
-            'categorie' => 'Keny White',
-            'nb_lecons' => 0,
-            'nb_inscrits' => 28,
-            'niveau' => 'Avancé',
-            'image_categorie' => ''
-        )
-    );
-}
+// Récupération des formations les plus récentes (10 max)
+$courses = $formationModel->getLatestFormations(10);
 
 // Récupération des catégories pour le filtre
-$categories = $wpdb->get_results("SELECT id_thematique, nom_thematique FROM sl_thematique ORDER BY nom_thematique ASC");
+$categories = $formationModel->getFormationCategories();
 ?>
 
 <section class="eduma-courses-section">
@@ -90,7 +34,7 @@ $categories = $wpdb->get_results("SELECT id_thematique, nom_thematique FROM sl_t
                     <select id="filter-category" class="filter-select">
                         <option value="">Toutes les catégories</option>
                         <?php foreach ($categories as $cat) : ?>
-                            <option value="<?php echo esc_attr($cat->id_thematique); ?>"><?php echo esc_html($cat->nom_thematique); ?></option>
+                            <option value="<?php echo esc_attr($cat['id']); ?>"><?php echo esc_html($cat['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -133,29 +77,45 @@ $categories = $wpdb->get_results("SELECT id_thematique, nom_thematique FROM sl_t
             <div class="swiper eduma-courses-swiper">
                 <div class="swiper-wrapper" id="courses-ajax-container">
                     <?php foreach ($courses as $course) : 
-                        $is_free = (empty($course->prix) || $course->prix == 0);
-                        $price_display = $is_free ? 'Gratuit' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
-                        $image_placeholder = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png'; 
+                        $price = $course['meta']['_lp_price'] ?? 0;
+                        $is_free = (empty($price) || $price == 0);
+                        $price_display = $is_free ? 'Gratuit' : (floor($price) == $price ? number_format($price, 0, '.', ' ') : number_format($price, 2, '.', ' ')) . ' €';
+                        
+                        // Gestion de l'image (Thumbnail WordPress ou Fallback catégorie)
+                        $thumbnail_id = $course['meta']['_thumbnail_id'] ?? null;
+                        $image_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'large') : '';
+                        
+                        if (empty($image_url)) {
+                            $cat_id = array_key_first($course['categories'] ?? []);
+                            $fallback_path = $formationModel->getCategoryImage($cat_id);
+                            $image_url = $fallback_path ? get_template_directory_uri() . '/' . $fallback_path : get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+                        }
+                        
+                        $course_url = get_permalink($course['ID']);
+                        $level = $course['meta']['niveau_public_formation'] ?? ($course['meta']['_lp_level'] ?? 'Tous niveaux');
+                        $lessons = $course['meta']['_lp_lesson_count'] ?? 0;
+                        $students = $course['meta']['_lp_students'] ?? 0;
+                        $category_name = $course['category']['name'] ?? 'Formation';
                     ?>
                         <div class="swiper-slide">
                             <div class="eduma-course-card">
                                 <div class="course-thumb">
-                                    <img src="<?php echo $image_placeholder; ?>" alt="<?php echo esc_attr($course->titre); ?>">
+                                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($course['post_title']); ?>">
                                     <div class="course-overlay">
-                                        <a href="#" class="read-more-btn">VOIR PLUS</a>
+                                        <a href="<?php echo esc_url($course_url); ?>" class="read-more-btn">VOIR PLUS</a>
                                     </div>
                                 </div>
                                 
                                 <div class="course-content">
-                                    <div class="course-author"><?php echo esc_html($course->categorie); ?></div>
+                                    <div class="course-author"><?php echo esc_html($category_name); ?></div>
                                     <h3 class="course-title-link">
-                                        <a href="#"><?php echo esc_html($course->titre); ?></a>
+                                        <a href="<?php echo esc_url($course_url); ?>"><?php echo esc_html($course['post_title']); ?></a>
                                     </h3>
                                     
                                     <div class="course-info-footer">
                                         <div class="info-left">
-                                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($course->nb_lecons); ?></span>
-                                            <span><i class="ph ph-users"></i> <?php echo esc_html($course->nb_inscrits); ?></span>
+                                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($lessons); ?></span>
+                                            <span><i class="ph ph-users"></i> <?php echo esc_html($students); ?></span>
                                         </div>
                                         <div class="info-right">
                                             <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">

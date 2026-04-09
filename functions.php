@@ -223,52 +223,23 @@ function studies_learning_menu_fallback() {
  * AJAX Handler for filtering courses
  */
 function studies_filter_courses_handler() {
-    check_ajax_referer( 'studies_filter_nonce', 'nonce' );
+    check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
 
-    global $wpdb;
+    require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
+    $formationModel = new \BackOfficeAdmin\FormationModel();
 
-    $category = isset($_POST['category']) ? intval($_POST['category']) : 0;
+    $category_id = isset($_POST['category']) ? intval($_POST['category']) : 0;
     $level = isset($_POST['level']) ? sanitize_text_field($_POST['level']) : '';
-    $price_type = isset($_POST['price']) ? sanitize_text_field($_POST['price']) : '';
+    $price_raw = isset($_POST['price']) ? sanitize_text_field($_POST['price']) : '';
 
-    $where = ["f.statut = 'publiée'"];
-    $params = [];
+    // Mappage des filtres pour le modèle
+    $filters = [];
+    if ($category_id > 0) $filters['category_id'] = $category_id;
+    if (!empty($level)) $filters['level'] = $level;
+    if ($price_raw === 'gratuit') $filters['price_type'] = 'free';
+    if ($price_raw === 'payant') $filters['price_type'] = 'paid';
 
-    if ($category > 0) {
-        $where[] = "f.id_thematique = %d";
-        $params[] = $category;
-    }
-
-    if (!empty($level)) {
-        $where[] = "f.niveau_formation = %s";
-        $params[] = $level;
-    }
-
-    if ($price_type === 'gratuit') {
-        $where[] = "(f.prix = 0 OR f.prix IS NULL)";
-    } elseif ($price_type === 'payant') {
-        $where[] = "f.prix > 0";
-    }
-
-    $where_sql = implode(' AND ', $where);
-    
-    $query = "
-        SELECT 
-            f.id_formation, f.titre, f.prix, f.niveau_formation AS niveau, f.nb_lessons AS nb_lecons,
-            t.nom_thematique AS categorie,
-            (SELECT COUNT(*) FROM sl_formation_students s WHERE s.id_formation = f.id_formation) AS nb_inscrits
-        FROM sl_formation f
-        LEFT JOIN sl_thematique t ON f.id_thematique = t.id_thematique
-        WHERE $where_sql
-        ORDER BY f.date_creation DESC
-        LIMIT 10
-    ";
-
-    if (!empty($params)) {
-        $courses = $wpdb->get_results($wpdb->prepare($query, ...$params));
-    } else {
-        $courses = $wpdb->get_results($query);
-    }
+    $courses = $formationModel->getLatestFormations(10, $filters);
 
     if (empty($courses)) {
         echo '<div class="no-courses-found">Aucune formation ne correspond à vos critères.</div>';
@@ -276,27 +247,42 @@ function studies_filter_courses_handler() {
     }
 
     foreach ($courses as $course) : 
-        $is_free = (empty($course->prix) || $course->prix == 0);
-        $price_display = $is_free ? 'Gratuit' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
-        $image_placeholder = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png'; 
+        $price = $course['meta']['_lp_price'] ?? 0;
+        $is_free = (empty($price) || $price == 0);
+        $price_display = $is_free ? 'Gratuit' : (floor($price) == $price ? number_format($price, 0, '.', ' ') : number_format($price, 2, '.', ' ')) . ' €';
+        
+        // Gestion de l'image (Thumbnail WordPress ou Fallback catégorie)
+        $thumbnail_id = $course['meta']['_thumbnail_id'] ?? null;
+        $image_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'large') : '';
+        
+        if (empty($image_url)) {
+            $cat_id = array_key_first($course['categories'] ?? []);
+            $fallback_path = $formationModel->getCategoryImage($cat_id);
+            $image_url = $fallback_path ? get_template_directory_uri() . '/' . $fallback_path : get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        }
+        
+        $course_url = get_permalink($course['ID']);
+        $category_name = $course['category']['name'] ?? 'Formation';
+        $lessons = $course['meta']['_lp_lesson_count'] ?? 0;
+        $students = $course['meta']['_lp_students'] ?? 0;
         ?>
         <div class="swiper-slide">
             <div class="eduma-course-card">
                 <div class="course-thumb">
-                    <img src="<?php echo $image_placeholder; ?>" alt="<?php echo esc_attr($course->titre); ?>">
+                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($course['post_title']); ?>">
                     <div class="course-overlay">
-                        <a href="#" class="read-more-btn">VOIR PLUS</a>
+                        <a href="<?php echo esc_url($course_url); ?>" class="read-more-btn">VOIR PLUS</a>
                     </div>
                 </div>
                 <div class="course-content">
-                    <div class="course-author"><?php echo esc_html($course->categorie); ?></div>
+                    <div class="course-author"><?php echo esc_html($category_name); ?></div>
                     <h3 class="course-title-link">
-                        <a href="#"><?php echo esc_html($course->titre); ?></a>
+                        <a href="<?php echo esc_url($course_url); ?>"><?php echo esc_html($course['post_title']); ?></a>
                     </h3>
                     <div class="course-info-footer">
                         <div class="info-left">
-                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($course->nb_lecons); ?></span>
-                            <span><i class="ph ph-users"></i> <?php echo esc_html($course->nb_inscrits); ?></span>
+                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($lessons); ?></span>
+                            <span><i class="ph ph-users"></i> <?php echo esc_html($students); ?></span>
                         </div>
                         <div class="info-right">
                             <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">
@@ -321,32 +307,16 @@ add_action('wp_ajax_nopriv_filter_courses', 'studies_filter_courses_handler');
 function studies_search_formations_handler() {
     check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
 
-    global $wpdb;
-    $s = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
+    require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
+    $formationModel = new \BackOfficeAdmin\FormationModel();
 
-    if (strlen($s) < 2) {
+    $term = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
+
+    if (strlen($term) < 2) {
         wp_die();
     }
 
-    $like_s = '%' . $wpdb->esc_like($s) . '%';
-    
-    $results = $wpdb->get_results($wpdb->prepare("
-        SELECT 
-            f.id_formation, f.titre, f.prix, f.niveau_formation AS niveau,
-            t.nom_thematique AS categorie
-        FROM sl_formation f
-        LEFT JOIN sl_thematique t ON f.id_thematique = t.id_thematique
-        WHERE f.statut = 'publiée' 
-        AND (f.titre LIKE %s OR t.nom_thematique LIKE %s)
-        ORDER BY 
-            CASE 
-                WHEN f.titre LIKE %s THEN 1
-                WHEN f.titre LIKE %s THEN 2
-                ELSE 3
-            END,
-            f.date_creation DESC
-        LIMIT 6
-    ", $like_s, $like_s, $s, $like_s));
+    $results = $formationModel->searchFormations($term, 6);
 
     if (empty($results)) {
         echo '<div class="search-no-results">Aucune formation trouvée.</div>';
@@ -354,19 +324,22 @@ function studies_search_formations_handler() {
     }
 
     foreach ($results as $item) :
-        $is_free = (empty($item->prix) || $item->prix == 0);
-        $price_label = $is_free ? 'Gratuit' : number_format($item->prix, 0, '.', ' ') . '€';
+        $price = $item['meta']['_lp_price'] ?? 0;
+        $is_free = (empty($price) || $price == 0);
+        $price_label = $is_free ? 'Gratuit' : number_format($price, 0, '.', ' ') . '€';
+        $level = $item['meta']['niveau_public_formation'] ?? ($item['meta']['_lp_level'] ?? 'Tous niveaux');
+        $category_name = $item['category']['name'] ?? 'Formation';
         ?>
-        <a href="<?php echo esc_url(home_url('/formation/' . $item->id_formation)); ?>" class="search-suggestion-item">
+        <a href="<?php echo esc_url(get_permalink($item['ID'])); ?>" class="search-suggestion-item">
             <div class="suggestion-icon">
                 <i class="ph ph-book-open"></i>
             </div>
             <div class="suggestion-info">
-                <h4 class="suggestion-title"><?php echo esc_html($item->titre); ?></h4>
+                <h4 class="suggestion-title"><?php echo esc_html($item['post_title']); ?></h4>
                 <div class="suggestion-meta">
-                    <span class="s-cat"><?php echo esc_html($item->categorie); ?></span>
+                    <span class="s-cat"><?php echo esc_html($category_name); ?></span>
                     <span class="s-sep">•</span>
-                    <span class="s-level"><?php echo esc_html($item->niveau); ?></span>
+                    <span class="s-level"><?php echo esc_html($level); ?></span>
                     <span class="s-sep">•</span>
                     <span class="s-price <?php echo $is_free ? 'is-free' : ''; ?>"><?php echo esc_html($price_label); ?></span>
                 </div>
