@@ -1,6 +1,6 @@
 <?php
 /**
- * Template part for displaying the courses section (Eduma Style)
+ * Template part for displaying the courses section (Eduma Style Refined)
  *
  * @package studies-learning
  */
@@ -39,7 +39,7 @@ if (empty($courses)) {
             'image_categorie' => ''
         ),
         (object) array(
-            'titre' => 'Create an LMS Website with LearnPress',
+            'titre' => 'Créez un site LMS avec LearnPress',
             'prix' => 0,
             'categorie' => 'Keny White',
             'nb_lecons' => 14,
@@ -48,7 +48,7 @@ if (empty($courses)) {
             'image_categorie' => ''
         ),
         (object) array(
-            'titre' => 'How To Sell In-Person Course With LearnPress',
+            'titre' => 'Vendre des cours en présentiel avec LearnPress',
             'prix' => 100.00,
             'categorie' => 'Keny White',
             'nb_lecons' => 20,
@@ -57,7 +57,7 @@ if (empty($courses)) {
             'image_categorie' => ''
         ),
         (object) array(
-            'titre' => 'How To Teach An Online Course',
+            'titre' => 'Comment enseigner un cours en ligne',
             'prix' => 55.00,
             'categorie' => 'Keny White',
             'nb_lecons' => 0,
@@ -70,13 +70,13 @@ if (empty($courses)) {
 ?>
 
 <section class="eduma-courses-section">
-    <div class="container">
+    <div class="eduma-container">
         <!-- Section Header: Title left, Navigation right -->
         <div class="eduma-section-header">
             <div class="header-left">
-                <h2 class="eduma-title">Popular Course</h2>
+                <h2 class="eduma-title">Cours les plus populaires</h2>
                 <div class="title-separator"></div>
-                <p class="eduma-subtitle">Limitless learning, more possibilities</p>
+                <p class="eduma-subtitle">Apprentissage illimité, plus de possibilités</p>
             </div>
             <div class="header-right">
                 <div class="swiper-navigation-custom">
@@ -92,8 +92,8 @@ if (empty($courses)) {
                 <div class="swiper-wrapper">
                     <?php foreach ($courses as $course) : 
                         $is_free = (empty($course->prix) || $course->prix == 0);
-                        $price_display = $is_free ? 'Free' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
-                        $image_placeholder = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png'; // Using existing banner as placeholder for course image
+                        $price_display = $is_free ? 'Gratuit' : ($course->prix == floor($course->prix) ? number_format($course->prix, 0, '.', ' ') : number_format($course->prix, 2, '.', ' ')) . ' €';
+                        $image_placeholder = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png'; 
                     ?>
                         <div class="swiper-slide">
                             <div class="eduma-course-card">
@@ -130,7 +130,7 @@ if (empty($courses)) {
         </div>
 
         <div class="eduma-footer-actions">
-            <a href="#" class="view-more-global">VIEW MORE</a>
+            <a href="#" class="view-more-global">VOIR TOUTES LES FORMATIONS</a>
         </div>
     </div>
 </section>

@@ -1,17 +1,48 @@
-/* Eduma-Style Courses Section */
+/* Eduma-Style Courses Section - Refined for 100vh and Spacing */
 .eduma-courses-section {
-  padding: 80px 0;
-  background: #f8fbff; /* Very light blue background */
+  height: 100vh;
+  min-height: 600px; /* Safety minimum */
+  padding: 4vh 0; /* Vertical padding relative to viewport */
+  background: #f8fbff;
   scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.eduma-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  /* Horizontal Spacing: 1.5rem mobile, 5% or 4rem desktop */
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+@media (min-width: 768px) {
+  .eduma-container {
+    padding: 0 5%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .eduma-container {
+    padding: 0 4rem;
+  }
 }
 
 .eduma-section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 40px;
+  margin-bottom: 3vh; /* Responsive margin */
   border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 20px;
+  padding-bottom: 15px;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -20,21 +51,21 @@
 
 .eduma-title {
   font-family: "Outfit", sans-serif;
-  font-size: 2.2rem;
+  font-size: clamp(1.8rem, 4vh, 2.5rem); /* Responsive font size */
   font-weight: 700;
   color: #2d3436;
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
 }
 
 .title-separator {
   width: 40px;
   height: 2px;
-  background: #0047ff; /* Theme Blue */
-  margin-bottom: 10px;
+  background: #0047ff;
+  margin-bottom: 8px;
 }
 
 .eduma-subtitle {
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 1.5vh, 1rem);
   color: #64748b;
   margin: 0;
 }
@@ -61,6 +92,7 @@
   border-radius: 4px;
   color: #2d3436;
   transition: all 0.3s;
+  background: #fff;
 }
 
 .swiper-button-next-custom:hover,
@@ -70,19 +102,27 @@
   border-color: #0047ff;
 }
 
-/* Slider */
-.eduma-courses-swiper {
-  padding: 10px 0 40px 0;
+/* Slider Wrapper */
+.eduma-slider-wrapper {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
   overflow: hidden;
+  max-height: 60vh; /* Constraint to fit 100vh */
+}
+
+.eduma-courses-swiper {
+  width: 100%;
+  padding: 10px 0 30px 0;
 }
 
 /* Card Style */
 .eduma-course-card {
   background: #fff;
   border: 1px solid #f1f5f9;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -90,12 +130,12 @@
 
 .eduma-course-card:hover {
   box-shadow: 0 20px 40px rgba(0, 71, 255, 0.08);
-  transform: translateY(-5px);
+  transform: translateY(-8px);
 }
 
 .course-thumb {
   position: relative;
-  height: 200px;
+  height: 180px; /* Slightly reduced to fit 100vh */
   overflow: hidden;
 }
 
@@ -103,7 +143,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s;
+  transition: transform 0.6s;
 }
 
 .eduma-course-card:hover .course-thumb img {
@@ -113,7 +153,7 @@
 .course-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 71, 255, 0.7); /* Theme Blue overlay */
+  background: rgba(0, 71, 255, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,16 +166,15 @@
 }
 
 .read-more-btn {
-  background: #0047ff;
-  color: #fff;
-  padding: 10px 25px;
+  background: #fff;
+  color: #0047ff;
+  padding: 8px 20px;
   text-decoration: none;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   border-radius: 4px;
-  transform: translateY(20px);
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(15px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .eduma-course-card:hover .read-more-btn {
@@ -144,30 +183,33 @@
 
 /* Content */
 .course-content {
-  padding: 25px;
+  padding: 20px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
 .course-author {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #64748b;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .course-title-link {
-  margin: 0 0 20px 0;
-  font-size: 1.15rem;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
   font-weight: 700;
-  line-height: 1.4;
-  height: 3.2em; /* Limit to 2 lines */
+  line-height: 1.3;
+  height: 2.6em;
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .course-title-link a {
   text-decoration: none;
-  color: #2d3436;
+  color: #1e293b;
   transition: color 0.3s;
 }
 
@@ -178,7 +220,7 @@
 /* Footer Info */
 .course-info-footer {
   margin-top: auto;
-  padding-top: 15px;
+  padding-top: 12px;
   border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;
@@ -187,40 +229,46 @@
 
 .info-left {
   display: flex;
-  gap: 15px;
-  color: #94a3b8;
-  font-size: 0.85rem;
+  gap: 12px;
+  color: #64748b;
+  font-size: 0.8rem;
 }
 
 .info-left span {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+}
+
+.info-left i {
+  color: #0047ff;
 }
 
 .price-tag {
   font-weight: 700;
   color: #0047ff;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .price-tag.is-free {
-  color: #22c55e;
+  color: #10b981;
 }
 
 /* Footer Actions */
 .eduma-footer-actions {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 3vh;
+  flex-shrink: 0;
 }
 
 .view-more-global {
   display: inline-block;
   background: #0047ff;
   color: #fff;
-  padding: 14px 40px;
+  padding: 12px 35px;
   text-decoration: none;
   font-weight: 700;
+  font-size: 0.9rem;
   border-radius: 4px;
   transition: all 0.3s;
   box-shadow: 0 8px 20px rgba(0, 71, 255, 0.2);
@@ -232,13 +280,15 @@
   box-shadow: 0 12px 25px rgba(0, 71, 255, 0.3);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .eduma-section-header {
-    flex-direction: column;
-    align-items: flex-start;
+/* Responsive adjustments for Height */
+@media (max-height: 800px) {
+  .course-thumb {
+    height: 150px;
   }
-  .header-right {
-    margin-top: 20px;
+  .course-content {
+    padding: 15px;
+  }
+  .eduma-course-card {
+    height: auto;
   }
 }
