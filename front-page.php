@@ -249,9 +249,9 @@ get_header();
             </div>
         </div>
     </section>
-    <?php get_template_part( 'template-parts/section-search-banner' ); ?>
-
     <?php get_template_part( 'template-parts/section', 'courses' ); ?>
+
+    <?php get_template_part( 'template-parts/section-search-banner' ); ?>
 </main>
 
 <?php

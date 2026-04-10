@@ -283,17 +283,26 @@ function studies_filter_courses_handler() {
         $is_free = (empty($price) || $price == 0);
         $price_display = $is_free ? 'Gratuit' : (floor($price) == $price ? number_format($price, 0, '.', ' ') : number_format($price, 2, '.', ' ')) . ' €';
         
-        $terms = wp_get_post_terms($post_id, 'course_category');
-        $category_name = !empty($terms) ? $terms[0]->name : 'Formation';
-        
-        // Image
-        $thumbnail_id = get_post_meta($post_id, '_thumbnail_id', true);
-        $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : '';
-        if (empty($image_url) && !empty($terms)) {
-            $cat_image_id = get_term_meta($terms[0]->term_id, 'category_image', true);
-            if ($cat_image_id) $image_url = wp_get_attachment_url($cat_image_id);
+        // Récupérer les catégories
+        $categories = wp_get_post_terms( $post_id, 'course_category' );
+        $category_name = '';
+        $cat_image_id = 0;
+
+        if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
+            $category = $categories[0]; // WP_Term object
+            $category_name = $category->name;
+            $cat_image_id = get_term_meta( $category->term_id, 'category_image', true );
         }
-        if (empty($image_url)) $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+
+        // Image : thumbnail prioritaire, sinon image de catégorie, sinon fallback
+        $thumb_id = get_post_meta( $post_id, '_thumbnail_id', true );
+        if ( ! empty( $thumb_id ) ) {
+            $image_url = wp_get_attachment_url( $thumb_id );
+        } elseif ( ! empty( $cat_image_id ) ) {
+            $image_url = wp_get_attachment_url( $cat_image_id );
+        } else {
+            $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        }
 
         $duration = get_post_meta($post_id, 'duree_formation', true) ?: 'NC';
         ?>
@@ -365,18 +374,73 @@ add_action('wp_ajax_search_formations', 'studies_search_formations_handler');
 add_action('wp_ajax_nopriv_search_formations', 'studies_search_formations_handler');
 
 /**
- * Récupère les dernières formations réelles sans fallbacks.
+ * Récupère les formations réelles avec support des filtres.
  */
-function studies_get_latest_formations( $limit = 5 ) {
+function studies_get_latest_formations( $limit = 5, $filters = [] ) {
     global $wpdb;
 
-    $sql = $wpdb->prepare(
-        "SELECT ID FROM {$wpdb->prefix}posts 
-         WHERE post_type = 'lp_course' AND post_status = 'publish' 
-         ORDER BY post_date DESC LIMIT %d",
-        $limit
+    $category = isset($filters['category']) ? $filters['category'] : '';
+    $level    = isset($filters['level']) ? $filters['level'] : '';
+    $price    = isset($filters['price']) ? $filters['price'] : '';
+
+    $args = array(
+        'post_type'      => 'lp_course',
+        'post_status'    => 'publish',
+        'posts_per_page' => $limit,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'fields'         => 'ids'
     );
-    $post_ids = $wpdb->get_col( $sql );
+
+    if ( ! empty( $category ) ) {
+        $args['tax_query'] = array(
+            array(
+                'taxonomy' => 'course_category',
+                'field'    => 'term_id',
+                'terms'    => $category,
+            ),
+        );
+    }
+
+    $meta_query = array();
+
+    if ( ! empty( $level ) ) {
+        $meta_query[] = array(
+            'key'     => '_lp_level',
+            'value'   => $level,
+            'compare' => '=',
+        );
+    }
+
+    if ( ! empty( $price ) ) {
+        if ( $price === 'gratuit' ) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_lp_price',
+                    'value'   => '0',
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => '_lp_price',
+                    'compare' => 'NOT EXISTS',
+                ),
+            );
+        } elseif ( $price === 'payant' ) {
+            $meta_query[] = array(
+                'key'     => '_lp_price',
+                'value'   => '0',
+                'compare' => '>',
+            );
+        }
+    }
+
+    if ( ! empty( $meta_query ) ) {
+        $args['meta_query'] = $meta_query;
+    }
+
+    $query = new WP_Query( $args );
+    $post_ids = $query->posts;
 
     if ( empty( $post_ids ) ) {
         return [];
@@ -393,11 +457,25 @@ function studies_get_latest_formations( $limit = 5 ) {
         $duration = get_post_meta( $id, '_lp_duration', true ) ?: get_post_meta( $id, 'duree_formation', true );
         $thumb_id = get_post_meta( $id, '_thumbnail_id', true );
         
-        $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+        // Récupérer les catégories
+        $categories = wp_get_post_terms( $id, 'course_category' );
+        $category_name = '';
+        $cat_image_id = 0;
 
-        // Catégories (taxonomie course_category)
-        $terms = wp_get_post_terms( $id, 'course_category' );
-        $cat_name = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '';
+        if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
+            $category = $categories[0]; // WP_Term object
+            $category_name = $category->name;
+            $cat_image_id = get_term_meta( $category->term_id, 'category_image', true );
+        }
+
+        // Image : thumbnail prioritaire, sinon image de catégorie, sinon fallback
+        if ( ! empty( $thumb_id ) ) {
+            $image_url = wp_get_attachment_url( $thumb_id );
+        } elseif ( ! empty( $cat_image_id ) ) {
+            $image_url = wp_get_attachment_url( $cat_image_id );
+        } else {
+            $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        }
 
         $formations[] = (object) [
             'id'            => $id,
@@ -408,7 +486,7 @@ function studies_get_latest_formations( $limit = 5 ) {
             'level'         => $level,
             'duration'      => $duration,
             'image'         => $image_url,
-            'category_name' => $cat_name,
+            'category_name' => $category_name,
             'url'           => get_permalink( $id ),
         ];
     }
@@ -458,3 +536,6 @@ function studies_search_formations( $keyword, $limit = 6 ) {
     }
     return $results;
 }
+/**
+ * AJAX Handler for Course Filtering
+ */

@@ -27,13 +27,16 @@ $categories = get_terms([
             </div>
             
             <!-- Filter Bar -->
-            <div class="courses-filters-bar">
+                    <div class="courses-filters-bar">
                 <button class="filter-btn active" data-filter="all">Tous</button>
                 
                 <div class="filter-group">
                     <select id="filter-category" class="filter-select">
                         <option value="">Toutes les catégories</option>
-                        <?php foreach ($categories as $cat) : ?>
+                        <?php foreach ($categories as $cat) : 
+                            if (is_wp_error($cat)) continue;
+                            $cat = (object) $cat; // S'assure que c'est un objet (sécurité contre WP_Error/arrays)
+                        ?>
                             <option value="<?php echo esc_attr($cat->term_id); ?>"><?php echo esc_html($cat->name); ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -50,13 +53,13 @@ $categories = get_terms([
                 
                 <div class="filter-group">
                     <select id="filter-price" class="filter-select">
-                        <option value="">Tous les types</option>
+                        <option value="">Tous les tarifs</option>
                         <option value="gratuit">Gratuit</option>
                         <option value="payant">Payant</option>
                     </select>
                 </div>
                 
-                <button id="reset-filters" class="reset-btn" style="display: none;"><i class="ph ph-x"></i></button>
+                <button id="reset-filters" class="reset-btn" title="Réinitialiser" style="display : none;"><i class="ph ph-arrow-counter-clockwise"></i></button>
             </div>
 
             <div class="header-right">

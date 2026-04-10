@@ -164,7 +164,13 @@ header {
   justify-content: center;
   align-items: center;
   scroll-snap-align: start;
-  padding-top: 2rem;
+  padding-top: 5rem; /* Increased to avoid header overlap */
+}
+
+@media (max-width: 768px) {
+  .hero-premium {
+    padding-top: 3rem;
+  }
 }
 
 .hero-content {
