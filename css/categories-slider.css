@@ -1,0 +1,97 @@
+/* Categories Slider Styling */
+.studies-categories-section {
+  padding: 4rem 0;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.studies-cat-slider-container {
+  margin-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.studies-cat-card {
+  display: block;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  text-decoration: none;
+  height: 100%;
+}
+
+.studies-cat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+.cat-img-wrapper {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+  position: relative;
+  background: #f1f5f9;
+}
+
+.cat-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.studies-cat-card:hover .cat-img-wrapper img {
+  transform: scale(1.05);
+}
+
+.cat-info {
+  padding: 1.5rem 1.2rem;
+  text-align: center;
+  background: #fff;
+}
+
+.cat-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat-count {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 6px;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* Smooth continuous sliding config */
+.studies-cat-slider .swiper-wrapper {
+  transition-timing-function: linear !important;
+}
+
+@media (max-width: 768px) {
+  .studies-categories-section {
+    padding: 3rem 0;
+  }
+  .cat-img-wrapper {
+    aspect-ratio: 16 / 10;
+  }
+  .cat-title {
+    font-size: 1rem;
+  }
+}

@@ -163,6 +163,9 @@ function studies_learning_scripts() {
     wp_enqueue_style( 'studies-learning-search-banner', get_template_directory_uri() . '/css/search-banner.css', array(), _S_VERSION );
     wp_enqueue_script( 'studies-learning-search-autocomplete', get_template_directory_uri() . '/js/search-autocomplete.js', array('jquery'), _S_VERSION, true );
 
+    // Category Slider Assets
+    wp_enqueue_style( 'studies-learning-categories-slider', get_template_directory_uri() . '/css/categories-slider.css', array(), _S_VERSION );
+
     // Localize both scripts
     $ajax_data = array(
         'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -570,3 +573,46 @@ function studies_search_formations( $keyword, $limit = 6 ) {
 /**
  * AJAX Handler for Course Filtering
  */
+
+
+/**
+ * Helper: Récupère les catégories de cours avec leurs données formatées.
+ */
+function studies_get_course_categories( $args = [] ) {
+    $defaults = [
+        'taxonomy'   => 'course_category',
+        'hide_empty' => true,
+        'orderby'    => 'count',
+        'order'      => 'DESC',
+        'number'     => 15
+    ];
+    $parsed_args = wp_parse_args( $args, $defaults );
+
+    $terms = get_terms( $parsed_args );
+
+    if ( is_wp_error( $terms ) || empty( $terms ) ) {
+        return [];
+    }
+
+    $categories = [];
+    foreach ( $terms as $term ) {
+        $image_id = get_term_meta( $term->term_id, 'category_image', true );
+        $image_url = '';
+        if ( ! empty( $image_id ) ) {
+            $image_url = wp_get_attachment_image_url( $image_id, 'medium' );
+        }
+        if ( empty( $image_url ) ) {
+            $image_url = get_template_directory_uri() . '/assets/img/default-course.jpg';
+        }
+
+        $categories[] = [
+            'id'        => $term->term_id,
+            'name'      => $term->name,
+            'slug'      => $term->slug,
+            'count'     => $term->count,
+            'link'      => get_term_link( $term ),
+            'image_url' => $image_url
+        ];
+    }
+    return $categories;
+}

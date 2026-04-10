@@ -252,6 +252,8 @@ get_header();
     <?php get_template_part( 'template-parts/section', 'courses' ); ?>
 
     <?php get_template_part( 'template-parts/section-search-banner' ); ?>
+
+    <?php get_template_part( 'template-parts/section-categories-slider' ); ?>
 </main>
 
 <?php
