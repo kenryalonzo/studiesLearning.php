@@ -50,6 +50,7 @@ function studies_learning_setup() {
 	register_nav_menus(
 		array(
 			'menu-1' => esc_html__( 'Primary', 'studies-learning' ),
+			'footer' => esc_html__( 'Menu du footer', 'studies-learning' ),
 		)
 	);
 
@@ -170,6 +171,10 @@ function studies_learning_scripts() {
     // FAQ Assets
     wp_enqueue_style( 'studies-learning-faq', get_template_directory_uri() . '/css/faq.css', array(), _S_VERSION );
     wp_enqueue_script( 'studies-learning-faq', get_template_directory_uri() . '/js/faq.js', array(), _S_VERSION, true );
+
+    // Footer Assets
+    wp_enqueue_style( 'studies-learning-footer', get_template_directory_uri() . '/css/footer.css', array(), _S_VERSION );
+    wp_enqueue_script( 'studies-learning-footer', get_template_directory_uri() . '/js/footer.js', array(), _S_VERSION, true );
 
     // Localize both scripts
     $ajax_data = array(
