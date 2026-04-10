@@ -268,10 +268,19 @@ function studies_filter_courses_handler() {
         if ($count >= 10) break;
 
         $price = get_post_meta($post_id, '_lp_price', true);
-        $course_level = get_post_meta($post_id, 'niveau_public_formation', true);
+        $course_level = strtolower(get_post_meta($post_id, '_lp_level', true) ?: get_post_meta($post_id, 'niveau_public_formation', true));
         
         // Filtrage PHP pour Niveau et Prix
-        if (!empty($level) && $course_level !== $level) continue;
+        $level_pass = true;
+        if (!empty($level)) {
+            $level_map = ['Débutant' => 'begin', 'Intermédiaire' => 'inter', 'Avancé' => 'expert'];
+            $req_lvl = isset($level_map[$level]) ? $level_map[$level] : strtolower($level);
+            if (strpos($course_level, $req_lvl) === false && strpos($course_level, strtolower($level)) === false) {
+                $level_pass = false;
+            }
+        }
+        if (!$level_pass) continue;
+
         if ($price_raw === 'gratuit' && (!empty($price) && $price > 0)) continue;
         if ($price_raw === 'payant' && (empty($price) || $price == 0)) continue;
 
@@ -453,8 +462,14 @@ function studies_get_latest_formations( $limit = 5, $filters = [] ) {
 
         // Récupération stricte des métadonnées LearnPress
         $price    = get_post_meta( $id, '_lp_price', true );
-        $level    = get_post_meta( $id, '_lp_level', true ) ?: get_post_meta( $id, 'niveau_public_formation', true );
+        $raw_level = strtolower(get_post_meta( $id, '_lp_level', true ) ?: get_post_meta( $id, 'niveau_public_formation', true ));
         $duration = get_post_meta( $id, '_lp_duration', true ) ?: get_post_meta( $id, 'duree_formation', true );
+        
+        // Traduction du niveau pour l'affichage (DB contient "beginner", "inter", "expert", etc.)
+        $display_level = 'Tous niveaux';
+        if (strpos($raw_level, 'begin') !== false || strpos($raw_level, 'debut') !== false) $display_level = 'Débutant';
+        elseif (strpos($raw_level, 'inter') !== false || strpos($raw_level, 'medium') !== false) $display_level = 'Intermédiaire';
+        elseif (strpos($raw_level, 'expert') !== false || strpos($raw_level, 'avanc') !== false) $display_level = 'Avancé';
         $thumb_id = get_post_meta( $id, '_thumbnail_id', true );
         
         // Récupérer les catégories
@@ -483,7 +498,7 @@ function studies_get_latest_formations( $limit = 5, $filters = [] ) {
             'content'       => $post->post_content,
             'excerpt'       => wp_trim_words( $post->post_content, 20 ),
             'price'         => $price,
-            'level'         => $level,
+            'level'         => $display_level,
             'duration'      => $duration,
             'image'         => $image_url,
             'category_name' => $category_name,

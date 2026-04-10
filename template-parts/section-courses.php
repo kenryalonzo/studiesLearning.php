@@ -103,8 +103,6 @@ $categories = get_terms([
                                         <a href="<?php echo esc_url($course->url); ?>"><?php echo esc_html($course->title); ?></a>
                                     </h3>
                                     
-                                    <p class="course-excerpt"><?php echo esc_html($course->excerpt); ?></p>
-                                    
                                     <div class="course-info-footer">
                                         <div class="info-left">
                                             <?php if ($course->duration) : ?>
