@@ -166,6 +166,10 @@ function studies_learning_scripts() {
     // Category Slider Assets
     wp_enqueue_style( 'studies-learning-categories-slider', get_template_directory_uri() . '/css/categories-slider.css', array(), _S_VERSION );
     wp_enqueue_style( 'studies-learning-featured-packages', get_template_directory_uri() . '/css/featured-packages.css', array(), _S_VERSION );
+    
+    // FAQ Assets
+    wp_enqueue_style( 'studies-learning-faq', get_template_directory_uri() . '/css/faq.css', array(), _S_VERSION );
+    wp_enqueue_script( 'studies-learning-faq', get_template_directory_uri() . '/js/faq.js', array(), _S_VERSION, true );
 
     // Localize both scripts
     $ajax_data = array(
@@ -676,4 +680,90 @@ function studies_get_featured_packages( $count = 4 ) {
     }
 
     return $packages;
+}
+
+/**
+ * Register Custom Post Type for FAQ
+ */
+function studies_register_faq_cpt() {
+    $labels = [
+        'name'               => 'Questions Fréquentes (FAQ)',
+        'singular_name'      => 'FAQ',
+        'menu_name'          => 'FAQs',
+        'name_admin_bar'     => 'FAQ',
+        'add_new'            => 'Ajouter une FAQ',
+        'add_new_item'       => 'Ajouter une nouvelle question',
+        'new_item'           => 'Nouvelle FAQ',
+        'edit_item'          => 'Modifier la FAQ',
+        'view_item'          => 'Voir la FAQ',
+        'all_items'          => 'Toutes les FAQs',
+        'search_items'       => 'Chercher des FAQs',
+        'not_found'          => 'Aucune FAQ trouvée.',
+    ];
+    $args = [
+        'labels'             => $labels,
+        'public'             => false,
+        'publicly_queryable' => false,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'query_var'          => false,
+        'rewrite'            => false,
+        'capability_type'    => 'post',
+        'has_archive'        => false,
+        'hierarchical'       => false,
+        'menu_position'      => null,
+        'menu_icon'          => 'dashicons-editor-help',
+        'supports'           => [ 'title', 'editor', 'page-attributes' ],
+    ];
+    register_post_type( 'sl_faq', $args );
+}
+add_action( 'init', 'studies_register_faq_cpt' );
+
+/**
+ * Helper: Récupère les requêtes FAQ. (CPT dynamique + Fallback statique)
+ */
+function studies_get_faqs() {
+    $faqs = [];
+    
+    // Attempt dynamic query
+    $query = new WP_Query( [
+        'post_type'      => 'sl_faq',
+        'posts_per_page' => -1,
+        'post_status'    => 'publish',
+        'orderby'        => 'menu_order',
+        'order'          => 'ASC'
+    ] );
+
+    if ( $query->have_posts() ) {
+        while ( $query->have_posts() ) {
+            $query->the_post();
+            $faqs[] = [
+                'question' => get_the_title(),
+                'answer'   => apply_filters('the_content', get_the_content()),
+            ];
+        }
+        wp_reset_postdata();
+    } else {
+        // Premium Static Fallback representing general elegant interactions
+        $faqs = [
+            [
+                'question' => 'À qui s\'adressent vos formations ?',
+                'answer'   => '<p>Nos parcours sont conçus pour les créateurs ambitieux, des novices souhaitant construire des bases solides aux professionnels cherchant à sublimer leur savoir-faire digital.</p>'
+            ],
+            [
+                'question' => 'Comment se déroule l\'enseignement ?',
+                'answer'   => '<p>Grâce à notre infrastructure de vidéo à la demande, vous suivez les leçons à votre rythme. Des Masterclasses en direct s\'ajoutent sporadiquement pour enrichir l\'expérience interactive.</p>'
+            ],
+            [
+                'question' => 'Aurais-je accès à vie aux ressources ?',
+                'answer'   => '<p>En effet, l\'acquisition d\'un cours standard vous octroie l\'accès illimité à l\'espace de travail et aux futures actualisations dudit programme sans surcoût.</p>'
+            ],
+            [
+                'question' => 'Vos diplômes sont-ils certifiés ?',
+                'answer'   => '<p>Chaque validation de module donne droit à une certification nominative, appuyée par de nombreux leaders du secteur. Elle constitue un véritable sceau de qualité pour votre portfolio.</p>'
+            ]
+        ];
+    }
+    
+    return $faqs;
 }

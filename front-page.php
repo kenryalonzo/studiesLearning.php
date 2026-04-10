@@ -256,6 +256,8 @@ get_header();
     <?php get_template_part( 'template-parts/section-categories-slider' ); ?>
     
     <?php get_template_part( 'template-parts/section-featured-packages' ); ?>
+    
+    <?php get_template_part( 'template-parts/section-faq' ); ?>
 </main>
 
 <?php
