@@ -579,24 +579,25 @@ function studies_search_formations( $keyword, $limit = 6 ) {
  * Helper: Récupère les catégories de cours avec leurs données formatées.
  */
 function studies_get_course_categories( $args = [] ) {
-    $defaults = [
-        'taxonomy'   => 'course_category',
-        'hide_empty' => true,
-        'orderby'    => 'count',
-        'order'      => 'DESC',
-        'number'     => 15
-    ];
-    $parsed_args = wp_parse_args( $args, $defaults );
+    global $wpdb;
+    
+    // Require count > 0 if hide_empty is configured, else fetch all.
+    // For this specific integration, we just fetch active categories natively.
+    $query = "SELECT t.term_id as id, t.name, t.slug, tt.count 
+              FROM {$wpdb->prefix}terms t 
+              INNER JOIN {$wpdb->prefix}term_taxonomy tt ON t.term_id = tt.term_id 
+              WHERE tt.taxonomy = 'course_category' AND tt.count > 0 
+              ORDER BY tt.count DESC LIMIT 20";
+              
+    $results = $wpdb->get_results($query, ARRAY_A);
 
-    $terms = get_terms( $parsed_args );
-
-    if ( is_wp_error( $terms ) || empty( $terms ) ) {
+    if ( empty( $results ) ) {
         return [];
     }
 
     $categories = [];
-    foreach ( $terms as $term ) {
-        $image_id = get_term_meta( $term->term_id, 'category_image', true );
+    foreach ( $results as $term ) {
+        $image_id = get_term_meta( $term['id'], 'category_image', true );
         $image_url = '';
         if ( ! empty( $image_id ) ) {
             $image_url = wp_get_attachment_image_url( $image_id, 'medium' );
@@ -605,12 +606,17 @@ function studies_get_course_categories( $args = [] ) {
             $image_url = get_template_directory_uri() . '/assets/img/default-course.jpg';
         }
 
+        $link = get_term_link( (int)$term['id'], 'course_category' );
+        if ( is_wp_error( $link ) ) {
+            $link = site_url( '/course-category/' . $term['slug'] );
+        }
+
         $categories[] = [
-            'id'        => $term->term_id,
-            'name'      => $term->name,
-            'slug'      => $term->slug,
-            'count'     => $term->count,
-            'link'      => get_term_link( $term ),
+            'id'        => $term['id'],
+            'name'      => $term['name'],
+            'slug'      => $term['slug'],
+            'count'     => $term['count'],
+            'link'      => $link,
             'image_url' => $image_url
         ];
     }

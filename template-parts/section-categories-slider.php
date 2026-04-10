@@ -25,16 +25,11 @@ if ( empty( $categories ) ) {
                 <div class="swiper-wrapper">
                     <?php foreach ( $categories as $cat ) : ?>
                         <div class="swiper-slide">
-                            <a href="<?php echo esc_url( $cat['link'] ); ?>" class="studies-cat-card">
-                                <div class="cat-img-wrapper">
-                                    <img src="<?php echo esc_url( $cat['image_url'] ); ?>" alt="<?php echo esc_attr( $cat['name'] ); ?>" loading="lazy">
-                                </div>
-                                <div class="cat-info">
-                                    <h3 class="cat-title"><?php echo esc_html( $cat['name'] ); ?></h3>
-                                    <?php if ( $cat['count'] > 0 ) : ?>
-                                        <span class="cat-count"><?php echo esc_html( $cat['count'] ); ?> cours</span>
-                                    <?php endif; ?>
-                                </div>
+                            <a href="<?php echo esc_url( $cat['link'] ); ?>" class="studies-cat-pill">
+                                <span class="cat-pill-title"><?php echo esc_html( $cat['name'] ); ?></span>
+                                <?php if ( $cat['count'] > 0 ) : ?>
+                                    <span class="cat-pill-count"><?php echo esc_html( $cat['count'] ); ?> cours</span>
+                                <?php endif; ?>
                             </a>
                         </div>
                     <?php endforeach; ?>
@@ -57,11 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 disableOnInteraction: false
             },
             speed: 3000,
-            allowTouchMove: true,
-            breakpoints: {
-                640: { slidesPerView: 2 },
-                1024: { slidesPerView: 4 }
-            }
+            allowTouchMove: true
         });
     }
 });
