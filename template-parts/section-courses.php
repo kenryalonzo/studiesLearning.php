@@ -5,7 +5,7 @@
  * @package studies-learning
  */
 
-// Récupération des formations les plus récentes (5) via le helper natif
+ // Récupération des formations les plus récentes (5) via le helper natif
 $courses = studies_get_latest_formations(5);
 
 // Récupération des catégories via l'API WordPress native
@@ -15,6 +15,7 @@ $categories = get_terms([
 ]);
 ?>
 
+<?php if (!empty($courses)) : ?>
 <section class="eduma-courses-section">
     <div class="eduma-container">
         <!-- Section Header: Title left, Navigation right -->
@@ -77,19 +78,24 @@ $categories = get_terms([
                 <div class="swiper-wrapper" id="courses-ajax-container">
                     <?php foreach ($courses as $course) : 
                         $is_free = (empty($course->price) || $course->price == 0);
-                        $price_display = $is_free ? 'Gratuit' : (floor($course->price) == $course->price ? number_format($course->price, 0, '.', ' ') : number_format($course->price, 2, '.', ' ')) . ' €';
+                        $price_val = (float)$course->price;
+                        $price_display = $is_free ? 'Gratuit' : (floor($price_val) == $price_val ? number_format($price_val, 0, '.', ' ') : number_format($price_val, 2, '.', ' ')) . ' €';
                     ?>
                         <div class="swiper-slide">
                             <div class="eduma-course-card">
                                 <div class="course-thumb">
-                                    <img src="<?php echo esc_url($course->image); ?>" alt="<?php echo esc_attr($course->title); ?>">
+                                    <?php if ($course->image) : ?>
+                                        <img src="<?php echo esc_url($course->image); ?>" alt="<?php echo esc_attr($course->title); ?>">
+                                    <?php else : ?>
+                                        <div class="thumb-placeholder"><i class="ph ph-graduation-cap"></i></div>
+                                    <?php endif; ?>
                                     <div class="course-overlay">
                                         <a href="<?php echo esc_url($course->url); ?>" class="read-more-btn">VOIR PLUS</a>
                                     </div>
                                 </div>
                                 
                                 <div class="course-content">
-                                    <div class="course-author"><?php echo esc_html($course->category); ?></div>
+                                    <div class="course-author"><?php echo esc_html($course->category_name); ?></div>
                                     <h3 class="course-title-link">
                                         <a href="<?php echo esc_url($course->url); ?>"><?php echo esc_html($course->title); ?></a>
                                     </h3>
@@ -98,8 +104,12 @@ $categories = get_terms([
                                     
                                     <div class="course-info-footer">
                                         <div class="info-left">
-                                            <span title="Durée"><i class="ph ph-clock"></i> <?php echo esc_html($course->duration); ?></span>
-                                            <span title="Niveau"><i class="ph ph-chart-bar"></i> <?php echo esc_html($course->level); ?></span>
+                                            <?php if ($course->duration) : ?>
+                                                <span title="Durée"><i class="ph ph-clock"></i> <?php echo esc_html($course->duration); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($course->level) : ?>
+                                                <span title="Niveau"><i class="ph ph-chart-bar"></i> <?php echo esc_html($course->level); ?></span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="info-right">
                                             <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">
@@ -120,3 +130,4 @@ $categories = get_terms([
         </div>
     </div>
 </section>
+<?php endif; ?>

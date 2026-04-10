@@ -353,124 +353,108 @@ function studies_search_formations_handler() {
         wp_send_json_success([]);
     }
 
-    $like_term = '%' . $wpdb->esc_like($term) . '%';
-    
-    $results = $wpdb->get_results($wpdb->prepare("
-        SELECT p.ID, p.post_title 
-        FROM {$wpdb->prefix}posts p
-        WHERE p.post_type = 'lp_course' 
-        AND p.post_status = 'publish' 
-        AND (p.post_title LIKE %s OR p.post_content LIKE %s)
-        ORDER BY 
-            CASE 
-                WHEN p.post_title LIKE %s THEN 1
-                WHEN p.post_title LIKE %s THEN 2
-                ELSE 3
-            END,
-            p.post_date DESC
-        LIMIT 6
-    ", $like_term, $like_term, $term, $like_term));
+    $results = studies_search_formations( $term, 6 );
 
-    if (empty($results)) {
-        wp_send_json_success([]);
+    if ( empty( $results ) ) {
+        wp_send_json_success( [] );
     }
 
-    $formatted_results = [];
-    foreach ($results as $item) {
-        $post_id = $item->ID;
-        $price = get_post_meta($post_id, '_lp_price', true);
-        $is_free = (empty($price) || $price == 0);
-        $price_label = $is_free ? 'Gratuit' : number_format((float)$price, 0, '.', ' ') . '€';
-        
-        $terms = wp_get_post_terms($post_id, 'course_category');
-        $category_name = !empty($terms) ? $terms[0]->name : 'Formation';
-        $level = get_post_meta($post_id, 'niveau_public_formation', true) ?: 'Tous niveaux';
-        
-        $formatted_results[] = [
-            'id' => $post_id,
-            'title' => $item->post_title,
-            'url' => get_permalink($post_id),
-            'category' => $category_name,
-            'level' => $level,
-            'price' => $price_label,
-            'is_free' => $is_free
-        ];
-    }
-
-    wp_send_json_success($formatted_results);
+    wp_send_json_success( $results );
 }
 add_action('wp_ajax_search_formations', 'studies_search_formations_handler');
 add_action('wp_ajax_nopriv_search_formations', 'studies_search_formations_handler');
 
 /**
- * Récupère les dernières formations publiées avec toutes leurs métadonnées.
- *
- * @param int $limit Nombre de formations à récupérer.
- * @return array Tableau d'objets formation.
+ * Récupère les dernières formations réelles sans fallbacks.
  */
 function studies_get_latest_formations( $limit = 5 ) {
     global $wpdb;
 
-    // Requête optimisée pour récupérer les IDs des posts de type lp_course
-    $results = $wpdb->get_results( $wpdb->prepare(
-        "SELECT ID, post_title, post_content FROM {$wpdb->prefix}posts 
-        WHERE post_type = 'lp_course' AND post_status = 'publish' 
-        ORDER BY post_date DESC LIMIT %d",
+    $sql = $wpdb->prepare(
+        "SELECT ID FROM {$wpdb->prefix}posts 
+         WHERE post_type = 'lp_course' AND post_status = 'publish' 
+         ORDER BY post_date DESC LIMIT %d",
         $limit
-    ) );
+    );
+    $post_ids = $wpdb->get_col( $sql );
 
-    if ( empty( $results ) ) {
+    if ( empty( $post_ids ) ) {
         return [];
     }
 
     $formations = [];
+    foreach ( $post_ids as $id ) {
+        $post = get_post( $id );
+        if ( ! $post ) continue;
 
-    foreach ( $results as $post ) {
-        $post_id = $post->ID;
+        // Récupération stricte des métadonnées LearnPress
+        $price    = get_post_meta( $id, '_lp_price', true );
+        $level    = get_post_meta( $id, '_lp_level', true ) ?: get_post_meta( $id, 'niveau_public_formation', true );
+        $duration = get_post_meta( $id, '_lp_duration', true ) ?: get_post_meta( $id, 'duree_formation', true );
+        $thumb_id = get_post_meta( $id, '_thumbnail_id', true );
         
-        // Métadonnées LearnPress et personnalisées
-        $price = get_post_meta( $post_id, '_lp_price', true );
-        $level = get_post_meta( $post_id, 'niveau_public_formation', true );
-        $duration = get_post_meta( $post_id, 'duree_formation', true );
-        $language = get_post_meta( $post_id, 'langue_formation', true );
-        $thumbnail_id = get_post_meta( $post_id, '_thumbnail_id', true );
+        $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
 
-        // Catégorie (Taxonomie course_category pour LearnPress)
-        $terms = wp_get_post_terms( $post_id, 'course_category' );
-        $category = ! empty( $terms ) ? $terms[0] : null;
-        $category_name = $category ? $category->name : 'Formation';
-
-        // Image avec Fallback
-        $image_url = '';
-        if ( $thumbnail_id ) {
-            $image_url = wp_get_attachment_url( $thumbnail_id );
-        }
-
-        if ( empty( $image_url ) && $category ) {
-            $cat_image_id = get_term_meta( $category->term_id, 'category_image', true );
-            if ( $cat_image_id ) {
-                $image_url = wp_get_attachment_url( $cat_image_id );
-            }
-        }
-
-        // Fallback vers l'image placeholder du thème
-        if ( empty( $image_url ) ) {
-            $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
-        }
+        // Catégories (taxonomie course_category)
+        $terms = wp_get_post_terms( $id, 'course_category' );
+        $cat_name = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '';
 
         $formations[] = (object) [
-            'id'       => $post_id,
-            'title'    => $post->post_title,
-            'excerpt'  => wp_trim_words( $post->post_content, 15 ),
-            'url'      => get_permalink( $post_id ),
-            'price'    => $price,
-            'level'    => $level ? $level : 'Tous niveaux',
-            'duration' => $duration ? $duration : 'Non précisée',
-            'language' => $language,
-            'category' => $category_name,
-            'image'    => $image_url,
+            'id'            => $id,
+            'title'         => $post->post_title,
+            'content'       => $post->post_content,
+            'excerpt'       => wp_trim_words( $post->post_content, 20 ),
+            'price'         => $price,
+            'level'         => $level,
+            'duration'      => $duration,
+            'image'         => $image_url,
+            'category_name' => $cat_name,
+            'url'           => get_permalink( $id ),
         ];
     }
 
     return $formations;
+}
+
+/**
+ * Recherche réelle de formations pour l'autocomplétion.
+ */
+function studies_search_formations( $keyword, $limit = 6 ) {
+    global $wpdb;
+    $like_term = '%' . $wpdb->esc_like( $keyword ) . '%';
+
+    $sql = $wpdb->prepare(
+        "SELECT ID FROM {$wpdb->prefix}posts p
+         WHERE p.post_type = 'lp_course' 
+         AND p.post_status = 'publish'
+         AND (p.post_title LIKE %s OR p.post_content LIKE %s)
+         ORDER BY 
+            CASE 
+                WHEN p.post_title LIKE %s THEN 1
+                ELSE 2
+            END,
+            p.post_date DESC
+         LIMIT %d",
+        $like_term, $like_term, $keyword . '%', $limit
+    );
+
+    $post_ids = $wpdb->get_col( $sql );
+    if ( empty( $post_ids ) ) return [];
+
+    $results = [];
+    foreach ( $post_ids as $id ) {
+        $price = get_post_meta( $id, '_lp_price', true );
+        $level = get_post_meta( $id, '_lp_level', true ) ?: get_post_meta( $id, 'niveau_public_formation', true );
+        $terms = wp_get_post_terms( $id, 'course_category' );
+        
+        $results[] = [
+            'id'       => $id,
+            'title'    => get_the_title( $id ),
+            'url'      => get_permalink( $id ),
+            'category' => ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
+            'level'    => $level,
+            'price'    => ( $price == 0 || empty($price) ) ? 'Gratuit' : number_format( (float)$price, 0, '.', ' ' ) . '€'
+        ];
+    }
+    return $results;
 }
