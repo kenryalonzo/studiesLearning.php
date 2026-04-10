@@ -34,18 +34,18 @@
   background:
     radial-gradient(
       ellipse 80% 60% at 15% 90%,
-      rgba(99, 160, 255, 0.1) 0%,
+      rgba(70, 130, 230, 0.13) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 60% 50% at 85% 10%,
-      rgba(180, 200, 255, 0.1) 0%,
+      rgba(140, 170, 240, 0.13) 0%,
       transparent 70%
     ),
     linear-gradient(
       160deg,
-      rgba(240, 245, 255, 0.55) 0%,
-      rgba(255, 255, 255, 0.8) 100%
+      rgba(218, 228, 248, 0.75) 0%,
+      rgba(235, 241, 255, 0.9) 100%
     );
   pointer-events: none;
   z-index: 0;
@@ -56,7 +56,8 @@
   position: relative;
   z-index: 1;
   padding: 4.5rem 0 3.5rem;
-  border-top: 1px solid var(--footer-border);
+  border-top: 1px solid rgba(180, 200, 240, 0.5);
+  background: rgba(210, 222, 245, 0.25);
   backdrop-filter: blur(var(--footer-blur));
   -webkit-backdrop-filter: blur(var(--footer-blur));
 }
@@ -80,14 +81,23 @@
 
 .footer-logo-wrap a,
 .footer-logo-wrap {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   text-decoration: none;
 }
 
-.footer-logo-wrap img {
-  max-height: 48px;
+/* Logo image (mirrors header .logo-img sizing) */
+.footer-logo-img {
+  max-height: 40px;
   width: auto;
   object-fit: contain;
+}
+
+/* Custom logo from WP Customizer */
+.footer-logo-wrap .custom-logo {
+  max-height: 48px;
+  width: auto;
 }
 
 .footer-site-name {

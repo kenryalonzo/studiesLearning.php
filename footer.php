@@ -17,16 +17,15 @@
 				<div class="footer-brand">
 
 					<?php if ( has_custom_logo() ) : ?>
-						<div class="footer-logo-wrap">
-							<?php the_custom_logo(); ?>
-						</div>
-					<?php else : ?>
-						<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="footer-logo-wrap" aria-label="<?php bloginfo( 'name' ); ?> – Accueil">
-							<span class="footer-site-name">
-								Studies <span>Learning</span>
-							</span>
-						</a>
-					<?php endif; ?>
+					<div class="footer-logo-wrap">
+						<?php the_custom_logo(); ?>
+					</div>
+				<?php else : ?>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="footer-logo-wrap" aria-label="<?php bloginfo( 'name' ); ?> – Accueil">
+						<img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/logo.png" alt="Studies Learning" class="footer-logo-img">
+						<span class="footer-site-name">Studies <span>Learning</span></span>
+					</a>
+				<?php endif; ?>
 
 					<p class="footer-tagline">Apprendre sans limites.</p>
 
