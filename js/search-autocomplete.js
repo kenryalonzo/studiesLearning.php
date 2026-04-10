@@ -23,8 +23,35 @@ jQuery(document).ready(function ($) {
         term: term,
       },
       success: function (response) {
-        $results.html(response).fadeIn(200);
         $loader.hide();
+        if (response.success && response.data.length > 0) {
+          let html = "";
+          response.data.forEach((item) => {
+            html += `
+              <a href="${item.url}" class="search-suggestion-item" data-id="${item.id}">
+                <div class="suggestion-icon">
+                  <i class="ph ph-book-open"></i>
+                </div>
+                <div class="suggestion-info">
+                  <h4 class="suggestion-title">${item.title}</h4>
+                  <div class="suggestion-meta">
+                    <span class="s-cat">${item.category}</span>
+                    <span class="s-sep">•</span>
+                    <span class="s-level">${item.level}</span>
+                    <span class="s-sep">•</span>
+                    <span class="s-price ${item.is_free ? "is-free" : ""}">${item.price}</span>
+                  </div>
+                </div>
+              </a>`;
+          });
+          $results.html(html).fadeIn(200);
+        } else {
+          $results
+            .html(
+              '<div class="search-no-results">Aucune formation trouvée.</div>',
+            )
+            .fadeIn(200);
+        }
       },
       error: function () {
         $loader.hide();

@@ -222,67 +222,98 @@ function studies_learning_menu_fallback() {
 /**
  * AJAX Handler for filtering courses
  */
+/**
+ * AJAX Handler for filtering courses (Version Native)
+ */
 function studies_filter_courses_handler() {
     check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
 
-    require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
-    $formationModel = new \BackOfficeAdmin\FormationModel();
+    global $wpdb;
 
     $category_id = isset($_POST['category']) ? intval($_POST['category']) : 0;
     $level = isset($_POST['level']) ? sanitize_text_field($_POST['level']) : '';
     $price_raw = isset($_POST['price']) ? sanitize_text_field($_POST['price']) : '';
 
-    // Mappage des filtres pour le modèle
-    $filters = [];
-    if ($category_id > 0) $filters['category_id'] = $category_id;
-    if (!empty($level)) $filters['level'] = $level;
-    if ($price_raw === 'gratuit') $filters['price_type'] = 'free';
-    if ($price_raw === 'payant') $filters['price_type'] = 'paid';
+    // Construction de la requête SQL native
+    $where = ["p.post_type = 'lp_course'", "p.post_status = 'publish'"];
+    $joins = "";
+    $params = [];
 
-    $courses = $formationModel->getLatestFormations(10, $filters);
+    if ($category_id > 0) {
+        $joins .= " INNER JOIN {$wpdb->prefix}term_relationships tr ON p.ID = tr.object_id";
+        $joins .= " INNER JOIN {$wpdb->prefix}term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id";
+        $where[] = "tt.term_id = %d";
+        $params[] = $category_id;
+    }
 
-    if (empty($courses)) {
+    // Pour le niveau et le prix, on filtrera en PHP après avoir récupéré les IDs pour éviter trop de JOINs complexes
+    // Ou on peut faire des JOINs sur postmeta. Faisons simple et efficace.
+    
+    $where_sql = implode(' AND ', $where);
+    $query = "SELECT DISTINCT p.ID FROM {$wpdb->prefix}posts p $joins WHERE $where_sql ORDER BY p.post_date DESC LIMIT 100";
+    
+    if (!empty($params)) {
+        $post_ids = $wpdb->get_col($wpdb->prepare($query, ...$params));
+    } else {
+        $post_ids = $wpdb->get_col($query);
+    }
+
+    if (empty($post_ids)) {
         echo '<div class="no-courses-found">Aucune formation ne correspond à vos critères.</div>';
         wp_die();
     }
 
-    foreach ($courses as $course) : 
-        $price = $course['meta']['_lp_price'] ?? 0;
+    $count = 0;
+    foreach ($post_ids as $post_id) {
+        if ($count >= 10) break;
+
+        $price = get_post_meta($post_id, '_lp_price', true);
+        $course_level = get_post_meta($post_id, 'niveau_public_formation', true);
+        
+        // Filtrage PHP pour Niveau et Prix
+        if (!empty($level) && $course_level !== $level) continue;
+        if ($price_raw === 'gratuit' && (!empty($price) && $price > 0)) continue;
+        if ($price_raw === 'payant' && (empty($price) || $price == 0)) continue;
+
+        $count++;
+        
+        // Récupération des données pour l'affichage
+        $title = get_the_title($post_id);
+        $url = get_permalink($post_id);
         $is_free = (empty($price) || $price == 0);
         $price_display = $is_free ? 'Gratuit' : (floor($price) == $price ? number_format($price, 0, '.', ' ') : number_format($price, 2, '.', ' ')) . ' €';
         
-        // Gestion de l'image (Thumbnail WordPress ou Fallback catégorie)
-        $thumbnail_id = $course['meta']['_thumbnail_id'] ?? null;
-        $image_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'large') : '';
+        $terms = wp_get_post_terms($post_id, 'course_category');
+        $category_name = !empty($terms) ? $terms[0]->name : 'Formation';
         
-        if (empty($image_url)) {
-            $cat_id = array_key_first($course['categories'] ?? []);
-            $fallback_path = $formationModel->getCategoryImage($cat_id);
-            $image_url = $fallback_path ? get_template_directory_uri() . '/' . $fallback_path : get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        // Image
+        $thumbnail_id = get_post_meta($post_id, '_thumbnail_id', true);
+        $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : '';
+        if (empty($image_url) && !empty($terms)) {
+            $cat_image_id = get_term_meta($terms[0]->term_id, 'category_image', true);
+            if ($cat_image_id) $image_url = wp_get_attachment_url($cat_image_id);
         }
-        
-        $course_url = get_permalink($course['ID']);
-        $category_name = $course['category']['name'] ?? 'Formation';
-        $lessons = $course['meta']['_lp_lesson_count'] ?? 0;
-        $students = $course['meta']['_lp_students'] ?? 0;
+        if (empty($image_url)) $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+
+        $duration = get_post_meta($post_id, 'duree_formation', true) ?: 'NC';
         ?>
         <div class="swiper-slide">
             <div class="eduma-course-card">
                 <div class="course-thumb">
-                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($course['post_title']); ?>">
+                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($title); ?>">
                     <div class="course-overlay">
-                        <a href="<?php echo esc_url($course_url); ?>" class="read-more-btn">VOIR PLUS</a>
+                        <a href="<?php echo esc_url($url); ?>" class="read-more-btn">VOIR PLUS</a>
                     </div>
                 </div>
                 <div class="course-content">
                     <div class="course-author"><?php echo esc_html($category_name); ?></div>
                     <h3 class="course-title-link">
-                        <a href="<?php echo esc_url($course_url); ?>"><?php echo esc_html($course['post_title']); ?></a>
+                        <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($title); ?></a>
                     </h3>
                     <div class="course-info-footer">
                         <div class="info-left">
-                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($lessons); ?></span>
-                            <span><i class="ph ph-users"></i> <?php echo esc_html($students); ?></span>
+                             <span title="Durée"><i class="ph ph-clock"></i> <?php echo esc_html($duration); ?></span>
+                             <span title="Niveau"><i class="ph ph-chart-bar"></i> <?php echo esc_html($course_level ?: 'Tous'); ?></span>
                         </div>
                         <div class="info-right">
                             <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">
@@ -294,7 +325,11 @@ function studies_filter_courses_handler() {
             </div>
         </div>
         <?php
-    endforeach;
+    }
+
+    if ($count === 0) {
+        echo '<div class="no-courses-found">Aucune formation ne correspond à vos critères.</div>';
+    }
 
     wp_die();
 }
@@ -304,51 +339,138 @@ add_action('wp_ajax_nopriv_filter_courses', 'studies_filter_courses_handler');
 /**
  * AJAX Handler for Real-Time Course Search
  */
+/**
+ * AJAX Handler for Real-Time Course Search (Version Native)
+ */
 function studies_search_formations_handler() {
     check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
 
-    require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
-    $formationModel = new \BackOfficeAdmin\FormationModel();
+    global $wpdb;
 
     $term = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
 
     if (strlen($term) < 2) {
-        wp_die();
+        wp_send_json_success([]);
     }
 
-    $results = $formationModel->searchFormations($term, 6);
+    $like_term = '%' . $wpdb->esc_like($term) . '%';
+    
+    $results = $wpdb->get_results($wpdb->prepare("
+        SELECT p.ID, p.post_title 
+        FROM {$wpdb->prefix}posts p
+        WHERE p.post_type = 'lp_course' 
+        AND p.post_status = 'publish' 
+        AND (p.post_title LIKE %s OR p.post_content LIKE %s)
+        ORDER BY 
+            CASE 
+                WHEN p.post_title LIKE %s THEN 1
+                WHEN p.post_title LIKE %s THEN 2
+                ELSE 3
+            END,
+            p.post_date DESC
+        LIMIT 6
+    ", $like_term, $like_term, $term, $like_term));
 
     if (empty($results)) {
-        echo '<div class="search-no-results">Aucune formation trouvée.</div>';
-        wp_die();
+        wp_send_json_success([]);
     }
 
-    foreach ($results as $item) :
-        $price = $item['meta']['_lp_price'] ?? 0;
+    $formatted_results = [];
+    foreach ($results as $item) {
+        $post_id = $item->ID;
+        $price = get_post_meta($post_id, '_lp_price', true);
         $is_free = (empty($price) || $price == 0);
-        $price_label = $is_free ? 'Gratuit' : number_format($price, 0, '.', ' ') . '€';
-        $level = $item['meta']['niveau_public_formation'] ?? ($item['meta']['_lp_level'] ?? 'Tous niveaux');
-        $category_name = $item['category']['name'] ?? 'Formation';
-        ?>
-        <a href="<?php echo esc_url(get_permalink($item['ID'])); ?>" class="search-suggestion-item">
-            <div class="suggestion-icon">
-                <i class="ph ph-book-open"></i>
-            </div>
-            <div class="suggestion-info">
-                <h4 class="suggestion-title"><?php echo esc_html($item['post_title']); ?></h4>
-                <div class="suggestion-meta">
-                    <span class="s-cat"><?php echo esc_html($category_name); ?></span>
-                    <span class="s-sep">•</span>
-                    <span class="s-level"><?php echo esc_html($level); ?></span>
-                    <span class="s-sep">•</span>
-                    <span class="s-price <?php echo $is_free ? 'is-free' : ''; ?>"><?php echo esc_html($price_label); ?></span>
-                </div>
-            </div>
-        </a>
-        <?php
-    endforeach;
+        $price_label = $is_free ? 'Gratuit' : number_format((float)$price, 0, '.', ' ') . '€';
+        
+        $terms = wp_get_post_terms($post_id, 'course_category');
+        $category_name = !empty($terms) ? $terms[0]->name : 'Formation';
+        $level = get_post_meta($post_id, 'niveau_public_formation', true) ?: 'Tous niveaux';
+        
+        $formatted_results[] = [
+            'id' => $post_id,
+            'title' => $item->post_title,
+            'url' => get_permalink($post_id),
+            'category' => $category_name,
+            'level' => $level,
+            'price' => $price_label,
+            'is_free' => $is_free
+        ];
+    }
 
-    wp_die();
+    wp_send_json_success($formatted_results);
 }
 add_action('wp_ajax_search_formations', 'studies_search_formations_handler');
 add_action('wp_ajax_nopriv_search_formations', 'studies_search_formations_handler');
+
+/**
+ * Récupère les dernières formations publiées avec toutes leurs métadonnées.
+ *
+ * @param int $limit Nombre de formations à récupérer.
+ * @return array Tableau d'objets formation.
+ */
+function studies_get_latest_formations( $limit = 5 ) {
+    global $wpdb;
+
+    // Requête optimisée pour récupérer les IDs des posts de type lp_course
+    $results = $wpdb->get_results( $wpdb->prepare(
+        "SELECT ID, post_title, post_content FROM {$wpdb->prefix}posts 
+        WHERE post_type = 'lp_course' AND post_status = 'publish' 
+        ORDER BY post_date DESC LIMIT %d",
+        $limit
+    ) );
+
+    if ( empty( $results ) ) {
+        return [];
+    }
+
+    $formations = [];
+
+    foreach ( $results as $post ) {
+        $post_id = $post->ID;
+        
+        // Métadonnées LearnPress et personnalisées
+        $price = get_post_meta( $post_id, '_lp_price', true );
+        $level = get_post_meta( $post_id, 'niveau_public_formation', true );
+        $duration = get_post_meta( $post_id, 'duree_formation', true );
+        $language = get_post_meta( $post_id, 'langue_formation', true );
+        $thumbnail_id = get_post_meta( $post_id, '_thumbnail_id', true );
+
+        // Catégorie (Taxonomie course_category pour LearnPress)
+        $terms = wp_get_post_terms( $post_id, 'course_category' );
+        $category = ! empty( $terms ) ? $terms[0] : null;
+        $category_name = $category ? $category->name : 'Formation';
+
+        // Image avec Fallback
+        $image_url = '';
+        if ( $thumbnail_id ) {
+            $image_url = wp_get_attachment_url( $thumbnail_id );
+        }
+
+        if ( empty( $image_url ) && $category ) {
+            $cat_image_id = get_term_meta( $category->term_id, 'category_image', true );
+            if ( $cat_image_id ) {
+                $image_url = wp_get_attachment_url( $cat_image_id );
+            }
+        }
+
+        // Fallback vers l'image placeholder du thème
+        if ( empty( $image_url ) ) {
+            $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        }
+
+        $formations[] = (object) [
+            'id'       => $post_id,
+            'title'    => $post->post_title,
+            'excerpt'  => wp_trim_words( $post->post_content, 15 ),
+            'url'      => get_permalink( $post_id ),
+            'price'    => $price,
+            'level'    => $level ? $level : 'Tous niveaux',
+            'duration' => $duration ? $duration : 'Non précisée',
+            'language' => $language,
+            'category' => $category_name,
+            'image'    => $image_url,
+        ];
+    }
+
+    return $formations;
+}

@@ -5,15 +5,14 @@
  * @package studies-learning
  */
 
-// Inclusion du modèle de formation
-require_once get_template_directory() . '/BackOfficeAdmin/FormationModel.php';
-$formationModel = new \BackOfficeAdmin\FormationModel();
+// Récupération des formations les plus récentes (5) via le helper natif
+$courses = studies_get_latest_formations(5);
 
-// Récupération des formations les plus récentes (10 max)
-$courses = $formationModel->getLatestFormations(10);
-
-// Récupération des catégories pour le filtre
-$categories = $formationModel->getFormationCategories();
+// Récupération des catégories via l'API WordPress native
+$categories = get_terms([
+    'taxonomy' => 'course_category',
+    'hide_empty' => false,
+]);
 ?>
 
 <section class="eduma-courses-section">
@@ -34,7 +33,7 @@ $categories = $formationModel->getFormationCategories();
                     <select id="filter-category" class="filter-select">
                         <option value="">Toutes les catégories</option>
                         <?php foreach ($categories as $cat) : ?>
-                            <option value="<?php echo esc_attr($cat['id']); ?>"><?php echo esc_html($cat['name']); ?></option>
+                            <option value="<?php echo esc_attr($cat->term_id); ?>"><?php echo esc_html($cat->name); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -77,45 +76,30 @@ $categories = $formationModel->getFormationCategories();
             <div class="swiper eduma-courses-swiper">
                 <div class="swiper-wrapper" id="courses-ajax-container">
                     <?php foreach ($courses as $course) : 
-                        $price = $course['meta']['_lp_price'] ?? 0;
-                        $is_free = (empty($price) || $price == 0);
-                        $price_display = $is_free ? 'Gratuit' : (floor($price) == $price ? number_format($price, 0, '.', ' ') : number_format($price, 2, '.', ' ')) . ' €';
-                        
-                        // Gestion de l'image (Thumbnail WordPress ou Fallback catégorie)
-                        $thumbnail_id = $course['meta']['_thumbnail_id'] ?? null;
-                        $image_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'large') : '';
-                        
-                        if (empty($image_url)) {
-                            $cat_id = array_key_first($course['categories'] ?? []);
-                            $fallback_path = $formationModel->getCategoryImage($cat_id);
-                            $image_url = $fallback_path ? get_template_directory_uri() . '/' . $fallback_path : get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
-                        }
-                        
-                        $course_url = get_permalink($course['ID']);
-                        $level = $course['meta']['niveau_public_formation'] ?? ($course['meta']['_lp_level'] ?? 'Tous niveaux');
-                        $lessons = $course['meta']['_lp_lesson_count'] ?? 0;
-                        $students = $course['meta']['_lp_students'] ?? 0;
-                        $category_name = $course['category']['name'] ?? 'Formation';
+                        $is_free = (empty($course->price) || $course->price == 0);
+                        $price_display = $is_free ? 'Gratuit' : (floor($course->price) == $course->price ? number_format($course->price, 0, '.', ' ') : number_format($course->price, 2, '.', ' ')) . ' €';
                     ?>
                         <div class="swiper-slide">
                             <div class="eduma-course-card">
                                 <div class="course-thumb">
-                                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($course['post_title']); ?>">
+                                    <img src="<?php echo esc_url($course->image); ?>" alt="<?php echo esc_attr($course->title); ?>">
                                     <div class="course-overlay">
-                                        <a href="<?php echo esc_url($course_url); ?>" class="read-more-btn">VOIR PLUS</a>
+                                        <a href="<?php echo esc_url($course->url); ?>" class="read-more-btn">VOIR PLUS</a>
                                     </div>
                                 </div>
                                 
                                 <div class="course-content">
-                                    <div class="course-author"><?php echo esc_html($category_name); ?></div>
+                                    <div class="course-author"><?php echo esc_html($course->category); ?></div>
                                     <h3 class="course-title-link">
-                                        <a href="<?php echo esc_url($course_url); ?>"><?php echo esc_html($course['post_title']); ?></a>
+                                        <a href="<?php echo esc_url($course->url); ?>"><?php echo esc_html($course->title); ?></a>
                                     </h3>
+                                    
+                                    <p class="course-excerpt"><?php echo esc_html($course->excerpt); ?></p>
                                     
                                     <div class="course-info-footer">
                                         <div class="info-left">
-                                            <span><i class="ph ph-file-text"></i> <?php echo esc_html($lessons); ?></span>
-                                            <span><i class="ph ph-users"></i> <?php echo esc_html($students); ?></span>
+                                            <span title="Durée"><i class="ph ph-clock"></i> <?php echo esc_html($course->duration); ?></span>
+                                            <span title="Niveau"><i class="ph ph-chart-bar"></i> <?php echo esc_html($course->level); ?></span>
                                         </div>
                                         <div class="info-right">
                                             <span class="price-tag <?php echo $is_free ? 'is-free' : ''; ?>">
