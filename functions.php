@@ -165,6 +165,7 @@ function studies_learning_scripts() {
 
     // Category Slider Assets
     wp_enqueue_style( 'studies-learning-categories-slider', get_template_directory_uri() . '/css/categories-slider.css', array(), _S_VERSION );
+    wp_enqueue_style( 'studies-learning-featured-packages', get_template_directory_uri() . '/css/featured-packages.css', array(), _S_VERSION );
 
     // Localize both scripts
     $ajax_data = array(
@@ -621,4 +622,58 @@ function studies_get_course_categories( $args = [] ) {
         ];
     }
     return $categories;
+}
+
+/**
+ * Helper: Récupère les packages mis en avant.
+ * En l'absence de meta ou CPT dédié, on utilise les derniers lp_course.
+ */
+function studies_get_featured_packages( $count = 4 ) {
+    $args = [
+        'post_type'      => 'lp_course',
+        'posts_per_page' => $count,
+        'post_status'    => 'publish',
+        'orderby'        => 'date',
+        'order'          => 'DESC'
+    ];
+    $query = new WP_Query( $args );
+    $packages = [];
+
+    if ( $query->have_posts() ) {
+        while ( $query->have_posts() ) {
+            $query->the_post();
+            $id = get_the_ID();
+            $price = get_post_meta( $id, '_lp_price', true );
+            
+            // Format price handling both free and paid courses gracefully
+            $price_format = ( empty( $price ) || $price == 0 ) ? 'Gratuit' : number_format( (float)$price, 2, ',', ' ' ) . ' €';
+
+            // Get thumbnail or default fallback
+            $image_url = get_the_post_thumbnail_url( $id, 'medium_large' );
+            if ( empty( $image_url ) ) {
+                $image_url = get_template_directory_uri() . '/assets/img/default-course.jpg';
+            }
+
+            // Get a single category for taxonomy display, default to empty
+            $cat_name = '';
+            $terms = wp_get_post_terms( $id, 'course_category' );
+            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+                $cat_name = $terms[0]->name;
+            }
+
+            $packages[] = [
+                'id'           => $id,
+                'title'        => get_the_title(),
+                'excerpt'      => wp_trim_words( get_the_excerpt(), 15, '...' ),
+                'price'        => $price,
+                'price_format' => $price_format,
+                'image_url'    => $image_url,
+                'link'         => get_permalink(),
+                'category'     => $cat_name
+            ];
+        }
+        wp_reset_postdata();
+    }
+
+    return $packages;
 }
