@@ -1,30 +1,29 @@
-/* Search Banner Section - Glassmorphism Style */
+/* Search Banner Section - Minimalist Premium Style */
 .search-banner-premium {
   position: relative;
-  padding: 120px 0;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
+  padding: 60px 0; /* Reduced padding */
+  background: #f8fbff; /* Softer, solid light background */
   overflow: hidden;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 400px;
 }
 
 /* Background Decorative Blobs */
 .search-banner-premium::before {
   content: "";
   position: absolute;
-  top: -150px;
-  left: -100px;
-  width: 500px;
-  height: 500px;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
   background: radial-gradient(
     circle,
-    rgba(0, 71, 255, 0.1) 0%,
+    rgba(0, 71, 255, 0.04) 0%,
     transparent 70%
   );
-  filter: blur(100px);
+  filter: blur(80px);
   z-index: 0;
   pointer-events: none;
 }
@@ -40,10 +39,10 @@
 
 .search-banner-content h2 {
   font-family: "Outfit", sans-serif;
-  font-size: 2.8rem;
-  font-weight: 800;
-  color: #121826;
-  margin-bottom: 40px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 30px;
   letter-spacing: -0.02em;
 }
 
@@ -86,91 +85,103 @@
   pointer-events: none;
 }
 
-/* Suggestions Dropdown */
+/* Suggestions Dropdown Container */
 .search-results-dropdown {
   position: absolute;
   top: calc(100% + 15px);
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   z-index: 1000;
-  overflow: hidden;
+  padding: 20px;
   display: none; /* Initially hidden */
   text-align: left;
 }
 
-.search-suggestion-item {
+/* Grid for Mini Cards */
+.search-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.mini-course-card {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 15px 25px;
-  text-decoration: none;
-  color: #121826;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  transition: all 0.2s;
-}
-
-.search-suggestion-item:last-child {
-  border-bottom: none;
-}
-
-.search-suggestion-item:hover,
-.search-suggestion-item.is-focused {
-  background: rgba(0, 71, 255, 0.05);
-}
-
-.suggestion-icon {
-  width: 45px;
-  height: 45px;
-  background: #fff;
+  gap: 15px;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  color: #0047ff;
-  box-shadow: 0 5px 15px rgba(0, 71, 255, 0.05);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background: #fff;
 }
 
-.suggestion-info {
+.mini-course-card:hover {
+  background: #f8fbff;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 71, 255, 0.05);
+}
+
+.mini-course-img-wrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+
+.mini-course-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-course-info {
   flex-grow: 1;
+  min-width: 0;
 }
 
-.suggestion-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #121826;
+.mini-course-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.suggestion-meta {
+.mini-course-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.m-cat {
   color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
-.s-sep {
-  opacity: 0.3;
-}
-
-.s-price {
+.m-price {
   font-weight: 700;
   color: #0047ff;
 }
 
-.s-price.is-free {
+.m-price.is-free {
   color: #10b981;
 }
 
 .search-no-results {
-  padding: 30px;
+  padding: 10px;
   text-align: center;
   color: #64748b;
   font-size: 0.95rem;
@@ -202,9 +213,9 @@
 
 @media (max-width: 768px) {
   .search-banner-content h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
-  .search-suggestion-item {
-    padding: 12px 20px;
+  .search-cards-grid {
+    grid-template-columns: 1fr; /* Full width on mobile */
   }
 }

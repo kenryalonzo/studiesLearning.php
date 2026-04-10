@@ -540,13 +540,29 @@ function studies_search_formations( $keyword, $limit = 6 ) {
         $level = get_post_meta( $id, '_lp_level', true ) ?: get_post_meta( $id, 'niveau_public_formation', true );
         $terms = wp_get_post_terms( $id, 'course_category' );
         
+        $thumb_id = get_post_meta( $id, '_thumbnail_id', true );
+        $image_url = '';
+        if ( ! empty( $thumb_id ) ) {
+            $image_url = wp_get_attachment_url( $thumb_id );
+        } elseif ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+            $cat_image_id = get_term_meta( $terms[0]->term_id, 'category_image', true );
+            if ( $cat_image_id ) {
+                $image_url = wp_get_attachment_url( $cat_image_id );
+            }
+        }
+        if ( empty( $image_url ) ) {
+            $image_url = get_template_directory_uri() . '/assets/img/hero/ban_3_bg.png';
+        }
+        
         $results[] = [
             'id'       => $id,
             'title'    => get_the_title( $id ),
             'url'      => get_permalink( $id ),
-            'category' => ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
+            'category' => ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : 'Formation',
             'level'    => $level,
-            'price'    => ( $price == 0 || empty($price) ) ? 'Gratuit' : number_format( (float)$price, 0, '.', ' ' ) . '€'
+            'price'    => ( $price == 0 || empty($price) ) ? 'Gratuit' : number_format( (float)$price, 0, '.', ' ' ) . '€',
+            'image'    => $image_url,
+            'is_free'  => (empty($price) || $price == 0)
         ];
     }
     return $results;

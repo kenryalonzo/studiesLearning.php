@@ -25,25 +25,23 @@ jQuery(document).ready(function ($) {
       success: function (response) {
         $loader.hide();
         if (response.success && response.data.length > 0) {
-          let html = "";
+          let html = '<div class="search-cards-grid">';
           response.data.forEach((item) => {
             html += `
-              <a href="${item.url}" class="search-suggestion-item" data-id="${item.id}">
-                <div class="suggestion-icon">
-                  <i class="ph ph-book-open"></i>
+              <a href="${item.url}" class="mini-course-card" data-id="${item.id}">
+                <div class="mini-course-img-wrapper">
+                  ${item.image ? `<img src="${item.image}" alt="${item.title}" class="mini-course-img" />` : `<div class="mini-course-img-placeholder"><i class="ph ph-graduation-cap"></i></div>`}
                 </div>
-                <div class="suggestion-info">
-                  <h4 class="suggestion-title">${item.title}</h4>
-                  <div class="suggestion-meta">
-                    <span class="s-cat">${item.category}</span>
-                    <span class="s-sep">•</span>
-                    <span class="s-level">${item.level}</span>
-                    <span class="s-sep">•</span>
-                    <span class="s-price ${item.is_free ? "is-free" : ""}">${item.price}</span>
+                <div class="mini-course-info">
+                  <h4 class="mini-course-title">${item.title}</h4>
+                  <div class="mini-course-meta">
+                    <span class="m-cat">${item.category}</span>
+                    <span class="m-price ${item.is_free ? "is-free" : ""}">${item.price}</span>
                   </div>
                 </div>
               </a>`;
           });
+          html += "</div>";
           $results.html(html).fadeIn(200);
         } else {
           $results
