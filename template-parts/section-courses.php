@@ -13,6 +13,10 @@ $categories = get_terms([
     'taxonomy' => 'course_category',
     'hide_empty' => false,
 ]);
+
+if ( is_wp_error( $categories ) || empty( $categories ) ) {
+    $categories = array();
+}
 ?>
 
 <?php if (!empty($courses)) : ?>
@@ -33,11 +37,19 @@ $categories = get_terms([
                 <div class="filter-group">
                     <select id="filter-category" class="filter-select">
                         <option value="">Toutes les catégories</option>
-                        <?php foreach ($categories as $cat) : 
-                            if (is_wp_error($cat)) continue;
-                            $cat = (object) $cat; // S'assure que c'est un objet (sécurité contre WP_Error/arrays)
-                        ?>
-                            <option value="<?php echo esc_attr($cat->term_id); ?>"><?php echo esc_html($cat->name); ?></option>
+                        <?php foreach ($categories as $cat) : ?>
+                            <?php
+                            if ( ! ( $cat instanceof WP_Term ) ) {
+                                continue;
+                            }
+                            $category_term_id = isset( $cat->term_id ) ? (int) $cat->term_id : 0;
+                            $category_name    = isset( $cat->name ) ? $cat->name : '';
+
+                            if ( $category_term_id <= 0 || '' === $category_name ) {
+                                continue;
+                            }
+                            ?>
+                            <option value="<?php echo esc_attr( $category_term_id ); ?>"><?php echo esc_html( $category_name ); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

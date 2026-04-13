@@ -154,6 +154,11 @@ function studies_learning_scripts() {
 
 	wp_enqueue_script( 'studies-learning-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );
 	wp_enqueue_script( 'studies-learning-main', get_template_directory_uri() . '/js/main.js', array(), _S_VERSION, true );
+
+	if ( is_page_template( 'page-formations.php' ) || is_post_type_archive( 'lp_course' ) ) {
+		wp_enqueue_style( 'studies-learning-formations', get_template_directory_uri() . '/css/formations-page.css', array(), _S_VERSION );
+		wp_enqueue_script( 'studies-learning-formations', get_template_directory_uri() . '/js/formations-page.js', array(), _S_VERSION, true );
+	}
 	
 	// Custom Courses Section Assets
 	wp_enqueue_style( 'studies-learning-courses', get_template_directory_uri() . '/css/courses-section.css', array(), _S_VERSION );
@@ -189,6 +194,168 @@ function studies_learning_scripts() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'studies_learning_scripts' );
+
+/**
+ * Extract and validate formations filters from request.
+ */
+function studies_get_formations_filters_from_request() {
+	$filters = array(
+		'cat'    => 0,
+		'author' => 0,
+		'level'  => '',
+		'price'  => '',
+	);
+
+	if ( isset( $_GET['cat'] ) ) {
+		$filters['cat'] = absint( wp_unslash( $_GET['cat'] ) );
+		if ( $filters['cat'] > 0 ) {
+			$term = get_term( $filters['cat'], 'course_category' );
+			if ( ! $term || is_wp_error( $term ) ) {
+				$filters['cat'] = 0;
+			}
+		}
+	}
+
+	if ( isset( $_GET['author'] ) ) {
+		$filters['author'] = absint( wp_unslash( $_GET['author'] ) );
+		if ( $filters['author'] > 0 && ! get_user_by( 'id', $filters['author'] ) ) {
+			$filters['author'] = 0;
+		}
+	}
+
+	if ( isset( $_GET['level'] ) ) {
+		$level            = sanitize_key( wp_unslash( $_GET['level'] ) );
+		$allowed_levels   = array( 'beginner', 'intermediate', 'advanced' );
+		$filters['level'] = in_array( $level, $allowed_levels, true ) ? $level : '';
+	}
+
+	if ( isset( $_GET['price'] ) ) {
+		$price            = sanitize_key( wp_unslash( $_GET['price'] ) );
+		$allowed_prices   = array( 'free', 'paid' );
+		$filters['price'] = in_array( $price, $allowed_prices, true ) ? $price : '';
+	}
+
+	return $filters;
+}
+
+/**
+ * Query helper for formations listing page.
+ *
+ * @param array $filters Filters: cat, author, level, price.
+ * @param int   $paged   Current page.
+ * @return WP_Query
+ */
+function studies_get_formations_query( $filters = array(), $paged = 1 ) {
+	$filters = wp_parse_args(
+		$filters,
+		array(
+			'cat'    => 0,
+			'author' => 0,
+			'level'  => '',
+			'price'  => '',
+		)
+	);
+
+	$paged = max( 1, absint( $paged ) );
+	$args  = array(
+		'post_type'      => 'lp_course',
+		'post_status'    => 'publish',
+		'posts_per_page' => 12,
+		'paged'          => $paged,
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	);
+
+	if ( ! empty( $filters['cat'] ) ) {
+		$args['tax_query'] = array(
+			array(
+				'taxonomy' => 'course_category',
+				'field'    => 'term_id',
+				'terms'    => absint( $filters['cat'] ),
+			),
+		);
+	}
+
+	if ( ! empty( $filters['author'] ) ) {
+		$args['author'] = absint( $filters['author'] );
+	}
+
+	$meta_query = array();
+
+	if ( ! empty( $filters['level'] ) ) {
+		$meta_query[] = array(
+			'key'     => '_lp_level',
+			'value'   => sanitize_key( $filters['level'] ),
+			'compare' => '=',
+		);
+	}
+
+	if ( ! empty( $filters['price'] ) ) {
+		if ( 'free' === $filters['price'] ) {
+			$meta_query[] = array(
+				'relation' => 'OR',
+				array(
+					'key'     => '_lp_price',
+					'value'   => '0',
+					'compare' => '=',
+				),
+				array(
+					'key'     => '_lp_price',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => '_lp_price',
+					'value'   => '',
+					'compare' => '=',
+				),
+			);
+		}
+
+		if ( 'paid' === $filters['price'] ) {
+			$meta_query[] = array(
+				'key'     => '_lp_price',
+				'value'   => 0,
+				'type'    => 'NUMERIC',
+				'compare' => '>',
+			);
+		}
+	}
+
+	if ( ! empty( $meta_query ) ) {
+		$args['meta_query'] = $meta_query;
+	}
+
+	return new WP_Query( $args );
+}
+
+/**
+ * Get available course authors for filters.
+ *
+ * @return array
+ */
+function studies_get_formations_authors() {
+	return get_users(
+		array(
+			'who'                 => 'authors',
+			'has_published_posts' => array( 'lp_course' ),
+			'orderby'             => 'display_name',
+			'order'               => 'ASC',
+		)
+	);
+}
+
+/**
+ * Human labels for course levels.
+ *
+ * @return array
+ */
+function studies_get_course_level_labels() {
+	return array(
+		'beginner'     => 'Débutant',
+		'intermediate' => 'Intermédiaire',
+		'advanced'     => 'Avancé',
+	);
+}
 
 /**
  * Implement the Custom Header feature.
