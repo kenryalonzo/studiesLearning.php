@@ -8,9 +8,7 @@
 
 get_header();
 
-$paged_from_query = get_query_var( 'paged' ) ? absint( get_query_var( 'paged' ) ) : 0;
-$paged_from_page  = get_query_var( 'page' ) ? absint( get_query_var( 'page' ) ) : 0;
-$paged            = max( 1, $paged_from_query, $paged_from_page );
+$paged = get_query_var( 'page' ) ? absint( get_query_var( 'page' ) ) : 1;
 
 $filters      = studies_get_formations_filters_from_request();
 $course_query = studies_get_formations_query( $filters, $paged );

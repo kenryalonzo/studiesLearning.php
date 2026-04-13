@@ -92,13 +92,23 @@
     /* ── AJAX Filtering & Pagination ──────────────────── */
 
     function getParamsFromUrl(url) {
-      var urlParams = new URL(url).searchParams;
+      var urlObj = new URL(url);
+      var urlParams = urlObj.searchParams;
+      
+      var page = urlParams.get('page') || urlParams.get('paged') || '';
+      if (!page) {
+        var match = urlObj.pathname.match(/\/page\/(\d+)\/?$/);
+        if (match) {
+          page = match[1];
+        }
+      }
+
       return {
         cat: urlParams.get('cat') || '',
         author: urlParams.get('author') || '',
         level: urlParams.get('level') || '',
         price: urlParams.get('price') || '',
-        paged: urlParams.get('paged') || ''
+        page: page
       };
     }
 
@@ -121,7 +131,7 @@
       });
     }
 
-    function loadFormations(url) {
+    function loadFormations(url, skipPush) {
       if (!window.studiesAjax || !gridWrap) return;
 
       gridWrap.classList.add("is-loading");
@@ -135,7 +145,7 @@
       if (params.author) formData.append('author', params.author);
       if (params.level) formData.append('level', params.level);
       if (params.price) formData.append('price', params.price);
-      if (params.paged) formData.append('paged', params.paged);
+      if (params.page) formData.append('page', params.page);
 
       fetch(window.studiesAjax.ajax_url, {
         method: 'POST',
@@ -145,7 +155,9 @@
       .then(function(res) {
         gridWrap.classList.remove("is-loading");
         if (res.success) {
-          history.pushState(params, '', url);
+          if (!skipPush) {
+            history.pushState(params, '', url);
+          }
           
           if (gridEl) {
              gridEl.innerHTML = res.data.grid_html;
@@ -157,10 +169,10 @@
           }
 
           if (paginationEl) {
-             paginationEl.innerHTML = res.data.pagination_html;
+             paginationEl.innerHTML = res.data.pagination_html || '';
           }
           if (countEl) {
-             countEl.innerHTML = res.data.count_html;
+             countEl.innerHTML = res.data.count_html || '';
           }
 
           // Fetch the page itself to silently replace the filter panel
@@ -215,7 +227,7 @@
 
     // Handle back button
     window.addEventListener("popstate", function() {
-      loadFormations(window.location.href);
+      loadFormations(window.location.href, true);
     });
 
   });

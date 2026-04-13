@@ -954,7 +954,7 @@ function studies_load_formations_handler() {
 		'price'  => isset( $_POST['price'] ) ? sanitize_text_field( $_POST['price'] ) : '',
 	);
 
-	$paged = isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1;
+	$paged = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : ( isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1 );
 
 	// Query for formations
 	$course_query = studies_get_formations_query( $filters, $paged );
@@ -1038,10 +1038,11 @@ function studies_load_formations_handler() {
 	// Output Buffering for pagination
 	ob_start();
 	if ( $course_query->max_num_pages > 1 ) {
+		// Provide a generic base if called from AJAX admin-ajax.php, JS relies on format
 		$pagination = paginate_links(
 			array(
 				'base'      => '%_%',
-				'format'    => '?paged=%#%',
+				'format'    => '',
 				'current'   => $paged,
 				'total'     => (int) $course_query->max_num_pages,
 				'type'      => 'list',
