@@ -104,11 +104,9 @@ if ( ! empty( $filters['price'] ) ) {
 
 <main id="primary" class="site-main formations-page">
 	<section class="formations-hero">
-		<div class="formations-hero-bg"></div>
 		<div class="formations-shell">
-			<p class="formations-kicker">Votre avenir commence ici</p>
-			<h1 class="formations-title">Forgez votre <span>savoir-faire</span></h1>
-			<p class="formations-intro">Des parcours conçus par des experts pour vous accompagner, étape par étape, vers l'atteinte de vos objectifs les plus ambitieux.</p>
+			<h1 class="formations-title">Toutes nos formations</h1>
+			<p class="formations-intro">Parcourez le catalogue et trouvez le cours qui répond à vos besoins.</p>
 		</div>
 	</section>
 
