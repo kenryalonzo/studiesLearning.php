@@ -188,6 +188,7 @@ function studies_learning_scripts() {
     );
     wp_localize_script( 'studies-learning-courses-filter', 'studiesAjax', $ajax_data );
     wp_localize_script( 'studies-learning-search-autocomplete', 'studiesSearchAjax', $ajax_data );
+    wp_localize_script( 'studies-learning-formations', 'studiesAjax', $ajax_data );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
@@ -939,3 +940,132 @@ function studies_get_faqs() {
     
     return $faqs;
 }
+
+/**
+ * AJAX Handler for the main Formations Page Filtering (Grid & Pagination)
+ */
+function studies_load_formations_handler() {
+	check_ajax_referer( 'studies_ajax_nonce', 'nonce' );
+
+	$filters = array(
+		'cat'    => isset( $_POST['cat'] ) ? absint( $_POST['cat'] ) : 0,
+		'author' => isset( $_POST['author'] ) ? absint( $_POST['author'] ) : 0,
+		'level'  => isset( $_POST['level'] ) ? sanitize_text_field( $_POST['level'] ) : '',
+		'price'  => isset( $_POST['price'] ) ? sanitize_text_field( $_POST['price'] ) : '',
+	);
+
+	$paged = isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1;
+
+	// Query for formations
+	$course_query = studies_get_formations_query( $filters, $paged );
+	$levels       = studies_get_course_level_labels();
+
+	// Output Buffering for grid
+	ob_start();
+	if ( $course_query->have_posts() ) {
+		while ( $course_query->have_posts() ) {
+			$course_query->the_post();
+			$post_id    = get_the_ID();
+			$thumb_id   = get_post_thumbnail_id( $post_id );
+			$price_raw  = get_post_meta( $post_id, '_lp_price', true );
+			$level_raw  = sanitize_key( get_post_meta( $post_id, '_lp_level', true ) );
+			$duration   = get_post_meta( $post_id, '_lp_duration', true );
+			$course_cat = wp_get_post_terms( $post_id, 'course_category', array( 'number' => 1 ) );
+
+			$course_cat_name = '';
+			if ( ! is_wp_error( $course_cat ) && ! empty( $course_cat ) ) {
+				$course_cat_name = $course_cat[0]->name;
+			}
+
+			$level_label = 'Tous niveaux';
+			if ( isset( $levels[ $level_raw ] ) ) {
+				$level_label = $levels[ $level_raw ];
+			} elseif ( false !== strpos( $level_raw, 'begin' ) ) {
+				$level_label = $levels['beginner'];
+			} elseif ( false !== strpos( $level_raw, 'inter' ) ) {
+				$level_label = $levels['intermediate'];
+			} elseif ( false !== strpos( $level_raw, 'advan' ) ) {
+				$level_label = $levels['advanced'];
+			}
+
+			$is_free       = '' === $price_raw || (float) $price_raw <= 0;
+			$price_display = $is_free ? 'Gratuit' : number_format_i18n( (float) $price_raw, 0 ) . ' €';
+			$excerpt       = get_the_excerpt();
+			if ( empty( $excerpt ) ) {
+				$excerpt = wp_trim_words( wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ), 18 );
+			}
+			?>
+			<article <?php post_class( 'formations-card' ); ?>>
+				<a class="formations-card-media" href="<?php the_permalink(); ?>">
+					<?php if ( $thumb_id ) : ?>
+						<?php echo wp_get_attachment_image( $thumb_id, 'medium_large', false, array( 'class' => 'formations-card-image', 'loading' => 'lazy', 'alt' => get_the_title() ) ); ?>
+					<?php else : ?>
+						<span class="formations-card-fallback"><i class="ph ph-graduation-cap"></i></span>
+					<?php endif; ?>
+				</a>
+				<div class="formations-card-body">
+					<div class="formations-card-top">
+						<span class="formations-card-category"><?php echo esc_html( $course_cat_name ); ?></span>
+						<span class="formations-card-level"><i class="ph ph-chart-bar" aria-hidden="true"></i> <?php echo esc_html( $level_label ); ?></span>
+					</div>
+					<h3 class="formations-card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+					<p class="formations-card-excerpt"><?php echo esc_html( $excerpt ); ?></p>
+					<div class="formations-card-footer">
+						<span class="formations-card-duration">
+							<i class="ph ph-clock"></i>
+							<?php echo esc_html( ! empty( $duration ) ? $duration : 'Flexible' ); ?>
+						</span>
+						<span class="formations-card-price <?php echo $is_free ? 'is-free' : ''; ?>"><?php echo esc_html( $price_display ); ?></span>
+					</div>
+				</div>
+			</article>
+			<?php
+		}
+	} else {
+		// Empty state
+		?>
+		<div class="formations-empty">
+			<div class="formations-empty-icon"><i class="ph ph-books" aria-hidden="true"></i></div>
+			<p>Aucune formation ne correspond aux filtres sélectionnés.</p>
+			<button type="button" data-reset-filters class="formations-btn-reset">
+				<i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Effacer les filtres
+			</button>
+		</div>
+		<?php
+	}
+	$grid_html = ob_get_clean();
+
+	// Output Buffering for pagination
+	ob_start();
+	if ( $course_query->max_num_pages > 1 ) {
+		$pagination = paginate_links(
+			array(
+				'base'      => '%_%',
+				'format'    => '?paged=%#%',
+				'current'   => $paged,
+				'total'     => (int) $course_query->max_num_pages,
+				'type'      => 'list',
+				'prev_text' => '←',
+				'next_text' => '→',
+			)
+		);
+		if ( $pagination ) {
+			echo wp_kses_post( $pagination );
+		}
+	}
+	$pagination_html = ob_get_clean();
+
+	$total_found = (int) $course_query->found_posts;
+	$count_text  = 1 === $total_found ? 'formation trouvée' : 'formations trouvées';
+	$count_html  = '<strong>' . esc_html( $total_found ) . '</strong> ' . $count_text;
+
+	wp_reset_postdata();
+
+	wp_send_json_success( array(
+		'grid_html'       => $grid_html,
+		'pagination_html' => $pagination_html,
+		'count_html'      => $count_html,
+	) );
+}
+add_action( 'wp_ajax_studies_load_formations', 'studies_load_formations_handler' );
+add_action( 'wp_ajax_nopriv_studies_load_formations', 'studies_load_formations_handler' );

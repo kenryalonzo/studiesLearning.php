@@ -104,10 +104,11 @@ if ( ! empty( $filters['price'] ) ) {
 
 <main id="primary" class="site-main formations-page">
 	<section class="formations-hero">
+		<div class="formations-hero-bg"></div>
 		<div class="formations-shell">
-			<p class="formations-kicker">Catalogue complet</p>
-			<h1 class="formations-title">Explorez toutes nos <span>formations</span></h1>
-			<p class="formations-intro">Affinez votre recherche avec des filtres intelligents et trouvez le parcours qui correspond à vos objectifs.</p>
+			<p class="formations-kicker">Votre avenir commence ici</p>
+			<h1 class="formations-title">Forgez votre <span>savoir-faire</span></h1>
+			<p class="formations-intro">Des parcours conçus par des experts pour vous accompagner, étape par étape, vers l'atteinte de vos objectifs les plus ambitieux.</p>
 		</div>
 	</section>
 
@@ -117,7 +118,7 @@ if ( ! empty( $filters['price'] ) ) {
 			$total_found = (int) $course_query->found_posts;
 			?>
 			<div class="formations-results-meta">
-				<p class="formations-count">
+				<p class="formations-count" id="formations-ajax-count">
 					<strong><?php echo esc_html( $total_found ); ?></strong> <?php echo 1 === $total_found ? 'formation trouvée' : 'formations trouvées'; ?>
 				</p>
 			</div>
@@ -219,9 +220,9 @@ if ( ! empty( $filters['price'] ) ) {
 				<?php endif; ?>
 			</div>
 
-			<div class="formations-grid-wrap" data-grid-animate>
+			<div class="formations-grid-wrap" data-grid-animate id="formations-ajax-grid-wrap">
 				<?php if ( $course_query->have_posts() ) : ?>
-					<div class="formations-grid">
+					<div class="formations-grid" id="formations-ajax-grid">
 						<?php while ( $course_query->have_posts() ) : ?>
 							<?php
 							$course_query->the_post();
@@ -298,17 +299,17 @@ if ( ! empty( $filters['price'] ) ) {
 					);
 					?>
 					<?php if ( $pagination ) : ?>
-						<nav class="formations-pagination" aria-label="Pagination des formations">
+						<nav class="formations-pagination" id="formations-ajax-pagination" aria-label="Pagination des formations">
 							<?php echo wp_kses_post( $pagination ); ?>
 						</nav>
 					<?php endif; ?>
 				<?php else : ?>
-					<div class="formations-empty">
+					<div class="formations-empty" id="formations-ajax-grid">
 						<div class="formations-empty-icon"><i class="ph ph-books" aria-hidden="true"></i></div>
 						<p>Aucune formation ne correspond aux filtres sélectionnés.</p>
-						<a href="<?php echo esc_url( $build_filter_url( array(), array( 'cat', 'author', 'level', 'price' ) ) ); ?>">
+						<button type="button" data-reset-filters class="formations-btn-reset">
 							<i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Effacer les filtres
-						</a>
+						</button>
 					</div>
 				<?php endif; ?>
 				<?php wp_reset_postdata(); ?>
